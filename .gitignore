@@ -62,6 +62,8 @@ AlazarTech_Digitizer/atsapi/atsapi.py
 
 AlazarTech_Digitizer/atsapi/ATSApi32.dll
 
+AlazarTech_Digitizer_with_SDK/atsapi
+
 Signadyne_Digitizer/SD_DLL_009600.dll
 
 Signadyne_Digitizer/signadyne.py
@@ -83,3 +85,4 @@ ehthumbs.db
 Thumbs.db
 *.bak
 Zurich_Instruments_HDAWG/zhinst/
+.vscode
