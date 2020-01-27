@@ -5,7 +5,7 @@ from VISA_Driver import VISA_Driver
 import numpy as np
 import re
 
-__version__ = '1.0'
+__version__ = '1.0.1'
 
 MIN_WAVE_LENGTH = 2400
 channel_re = re.compile(r'Ch (\d)$')
@@ -33,8 +33,8 @@ class Driver(VISA_Driver):
     def initSetConfig(self):
         """This function is run before setting values in Set Config"""
         # turn off run mode
-        self.bIsStopped = True
-        self.writeAndLog(':AWGC:STOP;')
+        self.bIsStopped = False
+        self.awg_stop()
         # init vectors with old values
         self.bWaveUpdated = False
         self.nOldSeq = -1
@@ -104,7 +104,6 @@ class Driver(VISA_Driver):
                     max_sample_rate = 5E9
                 if max_sample_rate and value > max_sample_rate:
                     value = max_sample_rate
-                quant.setValue(value)
             # for all other cases, call VISA driver
             value = VISA_Driver.performSetValue(self, quant, value, sweepRate,
                                                 options=options)
@@ -194,14 +193,6 @@ class Driver(VISA_Driver):
         # if not starting, make sure AWG is not running, then return
         if not bStart:
             self.awg_stop()
-            iRunState = int(self.askAndLog(':AWGC:RST?'))
-            nTry = 1000
-            while nTry>0 and iRunState!=0 and not self.isStopped():
-                # sleep for while to save resources, then try again
-                self.wait(0.05)
-                # try again
-                iRunState = int(self.askAndLog(':AWGC:RST?'))
-                nTry -= 1
             return
         # send command to turn on run mode to tek
         self.awg_run()
@@ -350,6 +341,19 @@ class Driver(VISA_Driver):
             return
         self.bIsStopped = True
         self.writeAndLog(':AWGC:STOP;')
+        # wait for output to be turned on again
+        iRunState = int(self.askAndLog(':AWGC:RST?'))
+        nTry = 1000
+        while nTry>0 and iRunState!=0 and not self.isStopped():
+            # sleep for while to save resources, then try again
+            self.wait(0.05)
+            # try again
+            iRunState = int(self.askAndLog(':AWGC:RST?'))
+            nTry -= 1
+        # check if timeout occurred
+        if nTry <= 0:
+            # timeout
+            raise InstrumentDriver.Error('Cannot turn off Run mode')
     
 
     def awg_run(self, force=False):

@@ -6,7 +6,7 @@
 name: Tektronix AWG5200
 
 # The version string should be updated whenever changes are made to this config file
-version: 1.0
+version: 1.0.1
 
 # Name of folder containing the code defining a custom driver. Do not define this item
 # or leave it blank for any standard driver based on the built-in VISA interface.
@@ -56,7 +56,7 @@ use_visa = True
 reset: True
 
 # Time (in seconds) before the timing out while waiting for an instrument response. Default is 5
-timeout: 10
+timeout: 60
 
 # Query instrument errors (True or False).  If True, every command sent to the device will
 # be followed by an error query.  This is useful when testing new setups, but may degrade
