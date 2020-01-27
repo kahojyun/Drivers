@@ -11,7 +11,7 @@ import ctypes
 # class Error(Exception):
 #     pass
 
-__version__ = "0.1"
+__version__ = "0.2.0"
 
 class Driver(InstrumentDriver.InstrumentWorker):
     """ This class implements the Acqiris card driver"""
@@ -74,9 +74,9 @@ class Driver(InstrumentDriver.InstrumentWorker):
                     # If not hardware trig, arm before acquiring
                     if not self.isHardwareTrig(options):
                         self.arming(nRecord, nAverage)
-                    buffer_callback = self.get_averager(nRecord, nAverage)
+                    buffer_callback, post_process = self.get_averager(nRecord, nAverage)
                     bTrig = self.isHardwareTrig(options)
-                    self.acquire_data(buffer_callback, bTrig)
+                    self.acquire_data(buffer_callback, post_process, bTrig)
                 finally:
                     self.board.abortAsyncRead()
                 self.lTrace = [np.zeros(nSample*nRecord), np.zeros(nSample*nRecord)]
@@ -360,19 +360,10 @@ class Driver(InstrumentDriver.InstrumentWorker):
         self.board.startCapture()
         self.log(f'Start capturing')
 
-    def convert_adc_to_one(self, data):
-        bitsPerSample = self.bitsPerSample
-        #  Right-shift raw data to get sample code
-        bitShift = (-bitsPerSample) % 8
-        codeZero = (1 << (bitsPerSample - 1)) - 0.5
-        codeRange = (1 << (bitsPerSample - 1)) - 0.5
-        return ((data >> bitShift) - codeZero) / codeRange
-
     def get_averager(self, nRecord, nAverage):
-        self.vData = np.zeros(self.samplesPerRecord*nRecord*self.channelCount)
+        self.vData = np.zeros(self.samplesPerRecord*nRecord*self.channelCount, dtype=np.float)
         self.nRecordCompleted = 0
         def averager(data, nRecord, nAverage):
-            uni_data = self.convert_adc_to_one(data)/nAverage
             recPerBuf = self.recordsPerBuffer
             sPerRec = self.samplesPerRecord
             recComp = self.nRecordCompleted
@@ -381,25 +372,35 @@ class Driver(InstrumentDriver.InstrumentWorker):
             # drop extra data
             if recComp + recPerBuf > nTotal:
                 recPerBuf = nTotal - recComp
-                uni_data = uni_data[:sPerRec*recPerBuf*channelCount]
-            # record aligned version
-            # self.vData += np.sum(uni_data.reshape(-1, len(self.vData)), axis=0)
-            # unaligned version
+                data = data[:sPerRec*recPerBuf*channelCount]
             pos = (recComp % nRecord)*sPerRec*channelCount
-            pre = len(self.vData) - pos
-            if pos + len(uni_data) <= len(self.vData):
-                self.vData[pos: pos+len(uni_data)] += uni_data
+            if pos + len(data) <= len(self.vData):
+                self.vData[pos: pos+len(data)] += data
             else:
-                self.vData[pos:] += uni_data[:pre]
-                post = (len(uni_data) - pre) % len(self.vData)
-                if post > 0:
-                    self.vData += np.sum(uni_data[pre: -post].reshape(-1, len(self.vData)), axis=0)
+                if pos > 0:
+                    pre = len(self.vData) - pos
+                    self.vData[pos:] += data[:pre]
                 else:
-                    self.vData += np.sum(uni_data[pre:].reshape(-1, len(self.vData)), axis=0)
+                    pre = 0
+                post = (len(data) - pre) % len(self.vData)
+                if post > 0:
+                    self.vData += np.sum(data[pre: -post].reshape(-1, len(self.vData)), dtype=np.float, axis=0)
+                    self.vData[:post] += data[-post:]
+                else:
+                    self.vData += np.sum(data[pre:].reshape(-1, len(self.vData)), dtype=np.float, axis=0)
             self.nRecordCompleted += recPerBuf
-        return lambda x: averager(x, nRecord, nAverage)
+        def post_process(nAverage):
+            bitsPerSample = self.bitsPerSample
+            #  Right-shift raw data to get sample code
+            bitShift = (-bitsPerSample) % 8
+            codeZero = (1 << (bitsPerSample - 1)) - 0.5
+            codeZero *= 1 << bitShift
+            codeRange = (1 << (bitsPerSample - 1)) - 0.5
+            codeRange *= 1 << bitShift
+            self.vData = ((self.vData / nAverage) - codeZero) / codeRange
+        return lambda x: averager(x, nRecord, nAverage), lambda: post_process(nAverage)
         
-    def acquire_data(self, process_buffer, trig_mode=False):
+    def acquire_data(self, process_buffer, post_process, trig_mode=False):
         timeout = self.getValue('Timeout')
         first_timeout = self.getValue('First timeout')
         t_out = first_timeout if trig_mode else timeout
@@ -422,7 +423,7 @@ class Driver(InstrumentDriver.InstrumentWorker):
                 # TODO: Process sample data in this buffer. Data is available
                 # as a NumPy array at buffer.buffer
                 # process_start = time.perf_counter()
-                process_buffer(buffer.buffer[:])
+                process_buffer(buffer.buffer)
                 # process_stop = time.perf_counter()
                 # process_time += process_stop-process_start
                 # self.log(f'buffer #:{buffersCompleted}, process time:{process_stop-process_start}')
@@ -454,6 +455,7 @@ class Driver(InstrumentDriver.InstrumentWorker):
         finally:
             self.board.abortAsyncRead()
         # Compute the total transfer time, and display performance information.
+        post_process()
         transferTime_sec = time.perf_counter() - start
         self.log("Capture completed in %f sec" % transferTime_sec)
         # process_time = time.perf_counter()
