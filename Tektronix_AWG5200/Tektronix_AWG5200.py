@@ -5,7 +5,7 @@ from VISA_Driver import VISA_Driver
 import numpy as np
 import re
 
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 MIN_WAVE_LENGTH = 2400
 channel_re = re.compile(r'Ch (\d)$')
@@ -173,9 +173,9 @@ class Driver(VISA_Driver):
                                 f':WAV "{filename}","{name}"')
                     # always wait for trigger
                     trig = self.getValue('Sequence - Trigger source')
-                    if trig == 'Internal Trigger':
+                    if trig == 'Internal':
                         trig = 'ITR'
-                    elif trig == 'Trigger A':
+                    elif trig == 'A':
                         trig = 'ATR'
                     else:
                         trig = 'BTR'
