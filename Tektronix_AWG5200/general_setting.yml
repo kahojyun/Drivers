@@ -1,0 +1,223 @@
+# Instrument driver configuration file.
+
+[General settings]
+
+# The name is shown in all the configuration windows
+name: Tektronix AWG5200
+
+# The version string should be updated whenever changes are made to this config file
+version: 1.0
+
+# Name of folder containing the code defining a custom driver. Do not define this item
+# or leave it blank for any standard driver based on the built-in VISA interface.
+driver_path: Tektronix_AWG5200
+
+# default interface and address
+interface: TCPIP
+
+# Define if the instrument can be hardware triggered
+support_arm: False
+support_hardware_loop: True
+
+
+[Model and options]
+# The option section allow instruments with different options to use the same driver
+
+# List of models supported by this driver
+model_str_1: 5208
+
+# Check instrument model id at startup (True or False). Default is False
+check_model: True
+
+# Valid model strings returned by the instrument. Default value = model_str
+model_id_1: TEKTRONIX,AWG5208
+
+check_options: True
+option_cmd: *OPT?
+
+option_str_1: 2.5GS/s Sample Rate
+option_str_2: 5GS/s Sample Rate
+option_str_3: Sequencing
+
+option_id_1: 25
+option_id_2: 50
+option_id_3: SEQ
+
+
+
+# General VISA settings for the instrument.
+[VISA settings]
+
+# Enable or disable communication over the VISA protocol (True or False)
+# If False, the driver will not perform any operations (unless there is a custom driver).
+use_visa = True
+
+# Reset the interface (not the instrument) at startup (True or False).  Default is False
+reset: True
+
+# Time (in seconds) before the timing out while waiting for an instrument response. Default is 5
+timeout: 10
+
+# Query instrument errors (True or False).  If True, every command sent to the device will
+# be followed by an error query.  This is useful when testing new setups, but may degrade
+# performance by slowing down the instrument communication. 
+query_instr_errors: False 
+
+# Bit mask for checking status byte errors (default is 255, include all errors)
+# The bits signal the following errors:
+# 0: Operation
+# 1: Request control
+# 2: Query error
+# 3: Device error
+# 4: Execution error
+# 5: Command error
+# 6: User request
+# 7: Power on
+error_bit_mask: 255
+
+# SCPI string to be used when querying for instrument error messages
+error_cmd: :SYST:ERR?
+
+# Initialization commands are sent to the instrument when starting the driver
+# *RST will reset the device, *CLS clears the interface
+init: 
+
+# Final commands sent to the instrument when closing the driver
+final: 
+
+
+# Define quantities in sections. This list is a selection of allowed keywords,
+# see the manual for a full list of options
+#   datatype:      The datatype should be one of DOUBLE, BOOLEAN, COMBO,
+#                  STRING, COMPLEX, VECTOR, VECTOR_COMPLEX, PATH or BUTTON.
+#   unit:          Quantity unit
+#   set_cmd:       Command used to send data to the instrument. Put <*> where the value should appear.
+#   get_cmd:       Command used to get the data from the instrument. Default is set_cmd?
+#   def_value:     Default value
+#   low_lim:       Lowest allowable value.  Defaults to -INF
+#   high_lim:      Highest allowable values.  Defaults to +INF
+#   combo_def_1:   First option in a pull-down combo box. Only used when datatype=COMBO
+#   combo_def_2:   Second option in a pull-down combo box. Only used when datatype=COMBO
+#   ...
+#   combo_def_n:   nth option in a pull-down combo box. Only used when datatype=COMBO
+#   state_quant:   Quantity that determines this control's visibility
+#   state_value_1: Value of "state_quant" for which the control is visible
+#   state_value_2: Value of "state_quant" for which the control is visible
+#   ...
+#   state_value_n: Value of "state_quant" for which the control is visible
+#   permission:    Sets read/writability, options are BOTH, READ, WRITE or NONE. Default is BOTH 
+#   group:         Name of the group where the control belongs.
+#   section:       Name of the section where the control belongs.
+
+
+# This command sets or returns the source of the clock.
+[Reference]
+section: Clock
+datatype: COMBO
+def_value: Internal
+combo_def_1: Internal
+combo_def_2: Reference In, External 10MHz
+combo_def_3: Reference In, External Variable
+combo_def_4: Clock In, External Variable
+cmd_def_1: INT
+cmd_def_2: EFIX
+cmd_def_3: EVAR
+cmd_def_4: EXT
+set_cmd: CLOC:SOUR
+
+[Ext. clock frequency]
+section: Clock
+unit: Hz
+datatype: DOUBLE
+def_value: 2.5E9
+low_lim: 2.5E9
+high_lim: 5E9
+set_cmd: CLOC:ECL:FREQ
+state_quant: Reference
+state_value_1: Clock In, External Variable
+
+[Ext. reference frequency]
+section: Clock
+unit: Hz
+datatype: DOUBLE
+def_value: 35E6
+low_lim: 35E6
+high_lim: 250E6
+set_cmd: CLOC:EREF:FREQ
+state_quant: Reference
+state_value_1: Reference In, External Variable
+
+[Jitter reduction]
+section: Clock
+datatype: BOOLEAN
+def_value: False
+set_cmd: CLOC:JITT
+state_quant: Reference
+state_value_1: Internal
+state_value_2: Reference In, External 10MHz
+state_value_3: Reference In, External Variable
+
+[Clock out]
+section: Clock
+datatype: BOOLEAN
+def_value: False
+set_cmd: CLOC:OUTP
+state_quant: Reference
+state_value_1: Internal
+state_value_2: Reference In, External 10MHz
+state_value_3: Reference In, External Variable
+
+[Sample rate]
+section: Clock
+label: Sample rate
+datatype: DOUBLE
+unit: Hz
+def_value: 2.5E9
+low_lim: 298
+set_cmd: CLOC:SRAT
+state_quant: Reference
+state_value_1: Internal
+state_value_2: Reference In, External 10MHz
+state_value_3: Reference In, External Variable
+show_in_measurement_dlg: True
+
+[Internal Trigger - interval]
+section: Trigger
+group: Internal trigger
+label: interval
+datatype: DOUBLE
+unit: s
+def_value: 1E-3
+low_lim: 1E-6
+high_lim: 10
+set_cmd: TRIG:INT
+show_in_measurement_dlg: True
+
+[Run]
+datatype: BUTTON
+tooltip: Set instrument to run mode
+set_cmd: AWGC:RUN
+show_in_measurement_dlg: True
+
+[Stop]
+datatype: BUTTON
+tooltip: Set instrument to stop mode
+set_cmd: AWGC:STOP
+show_in_measurement_dlg: True
+
+[All output off]
+datatype: BOOLEAN
+def_value: False
+set_cmd: OUTP:OFF
+
+[Sequence - Trigger source]
+section: Sequence
+label: Trigger Source
+datatype: COMBO
+def_value: Internal
+combo_def_1: Internal
+combo_def_2: A
+combo_def_3: B
+cmd_def_1: ITR
+cmd_def_2: ATR
+cmd_def_3: BTR
