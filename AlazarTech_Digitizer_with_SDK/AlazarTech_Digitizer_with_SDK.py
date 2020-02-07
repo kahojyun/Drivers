@@ -11,7 +11,7 @@ import ctypes
 # class Error(Exception):
 #     pass
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 class Driver(InstrumentDriver.InstrumentWorker):
     """ This class implements the Acqiris card driver"""
@@ -167,7 +167,7 @@ class Driver(InstrumentDriver.InstrumentWorker):
         # Retry setting capture clock. Avoid 'PLL not locked' error.
         n = 0
         retry = 5
-        while True:
+        while not self.isStopped():
             n += 1
             try:
                 self.board.setCaptureClock(source,
@@ -262,6 +262,9 @@ class Driver(InstrumentDriver.InstrumentWorker):
         # Configure AUX I/O connector as required
         self.board.configureAuxIO(ats.AUX_OUT_TRIGGER,
                             0)
+        
+        # records to be omitted
+        self.nIgnoreTrig = int(self.getValue('Ignore Trig'))
         self.log('Finish board configuration.')
         self.bConfig = False
 
@@ -285,7 +288,7 @@ class Driver(InstrumentDriver.InstrumentWorker):
         bytesPerRecord = bytesPerSample * samplesPerRecord
 
         # TODO: Select the number of records per DMA buffer.
-        nTotal = nRecord*nAverage
+        nTotal = nRecord*nAverage + self.nIgnoreTrig
         totalBytes = nTotal*bytesPerRecord*channelCount
         # Compute the number of bytes per buffer
         # Limit the size of a buffer
@@ -295,7 +298,6 @@ class Driver(InstrumentDriver.InstrumentWorker):
             bytesPerBuffer = 16*1024*1024
         else:
             bytesPerBuffer = np.sqrt(totalBytes/1024/1024)*1024*1024
-        # recordsPerBuffer = int(np.ceil(bytesPerBuffer/bytesPerRecord/channelCount/nRecord))*nRecord
         recordsPerBuffer = int(np.ceil(bytesPerBuffer/bytesPerRecord/channelCount))
         # TODO: Select the number of buffers per acquisition.
         buffersPerAcquisition = int(np.ceil(nTotal/recordsPerBuffer))
@@ -363,12 +365,22 @@ class Driver(InstrumentDriver.InstrumentWorker):
     def get_averager(self, nRecord, nAverage):
         self.vData = np.zeros(self.samplesPerRecord*nRecord*self.channelCount, dtype=np.float)
         self.nRecordCompleted = 0
+        self.nRecordIgnored = 0
         def averager(data, nRecord, nAverage):
             recPerBuf = self.recordsPerBuffer
             sPerRec = self.samplesPerRecord
             recComp = self.nRecordCompleted
             channelCount = self.channelCount
             nTotal = nRecord * nAverage
+            # omit first records
+            if self.nRecordIgnored < self.nIgnoreTrig:
+                recIgn = self.nIgnoreTrig - self.nRecordIgnored
+                if recPerBuf <= recIgn:
+                    self.nRecordIgnored += recPerBuf
+                    return
+                data = data[sPerRec*recIgn*channelCount:]
+                recPerBuf -= recIgn
+                self.nRecordIgnored = self.nIgnoreTrig
             # drop extra data
             if recComp + recPerBuf > nTotal:
                 recPerBuf = nTotal - recComp
