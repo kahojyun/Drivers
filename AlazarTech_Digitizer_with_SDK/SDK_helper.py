@@ -15,7 +15,8 @@ HARDWARE_SPEC = {
     },
     # external trigger range
     'EXT_TRIG_RANGE': {
-        'ATS9870': 'ETR_5V'
+        'ATS9870': 'ETR_5V',
+        'ATS9360': 'ETR_2V5'
     },
     # internal sample rate
     'SAMPLE_RATE': {
@@ -164,7 +165,7 @@ def choose_external_sample_rate(model, target):
         return sample_rate, deci[min_i]
     # ATS9360 supports 300MS/s -- 1800MS/s, 1MS/s step
     if model == 'ATS9360':
-        sample_rate = np.clip(sample_rate, 300e6, 1800e6)
+        target = np.clip(target, 300e6, 1800e6)
         sample_rate = int(target/1e6)*1000000
         return sample_rate, 1
     raise Exception('Not implemented')
