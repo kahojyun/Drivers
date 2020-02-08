@@ -11,7 +11,7 @@ import ctypes
 # class Error(Exception):
 #     pass
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 class Driver(InstrumentDriver.InstrumentWorker):
     """ This class implements the Acqiris card driver"""
@@ -126,6 +126,7 @@ class Driver(InstrumentDriver.InstrumentWorker):
             raise Exception("Unknown board model")
 
     def validate_settings(self, quant=None, value=None):
+        # sample rate
         sample_rate = self.getValue('Sample rate')
         model = self.getModel()
         if self.getValue('Clock source') == 'Internal':
@@ -134,6 +135,11 @@ class Driver(InstrumentDriver.InstrumentWorker):
         elif self.getValue('Clock source') == '10 MHz Reference':
             sr, deci = atsh.choose_external_sample_rate(model, sample_rate)
             self.setValue('Sample rate', sr/deci)
+        # ensure integer
+        self.setValue('Number of samples', int(self.getValue('Number of samples')))
+        self.setValue('Number of records', int(self.getValue('Number of records')))
+        self.setValue('Number of averages', int(self.getValue('Number of averages')))
+        self.setValue('Ignore Trig', int(self.getValue('Ignore Trig')))
         if quant:
             return quant.getValue()
 
@@ -209,10 +215,8 @@ class Driver(InstrumentDriver.InstrumentWorker):
         ext_trig_range = atsh.HARDWARE_SPEC['EXT_TRIG_RANGE'][self.getModel()]
         trig_coupling = self.getCmdStringFromValue('Trig coupling')
         if trig_source == 'TRIG_CHAN_A':
-            input_range = self.getCmdStringFromValue('Ch1 - Range')
             input_range_volts = self.channel_range[0]
         elif trig_source == 'TRIG_CHAN_B':
-            input_range = self.getCmdStringFromValue('Ch2 - Range')
             input_range_volts = self.channel_range[1]
         elif trig_source == 'TRIG_EXTERNAL':
             input_range_volts = atsh.EXT_TRIG_RANGE_VALUE[ext_trig_range]
