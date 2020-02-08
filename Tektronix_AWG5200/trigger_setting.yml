@@ -1,0 +1,44 @@
+[Trigger {source} - level]
+section: Trigger
+group: External trigger input {source}
+label: level
+datatype: DOUBLE
+unit: V
+def_value: 1.4
+low_lim: -5
+high_lim: 5
+set_cmd: TRIG:LEV <*>,{source}TR
+get_cmd: TRIG:LEV? {source}TR
+
+[Trigger {source} - slope]
+section: Trigger
+group: External trigger input {source}
+label: slope
+datatype: COMBO
+def_value: Positive
+combo_def_1: Positive
+combo_def_2: Negative
+cmd_def_1: POS
+cmd_def_2: NEG
+set_cmd: TRIG:SLOP <*>,{source}TR
+get_cmd: TRIG:SLOP? {source}TR
+
+[Trigger {source} - impedance]
+section: Trigger
+group: External trigger input {source}
+label: impedance
+datatype: COMBO
+def_value: 50 Ohm
+combo_def_1: 50 Ohm
+combo_def_2: 1 kOhm
+cmd_def_1: 50
+cmd_def_2: 1000
+set_cmd: TRIG:IMP <*>,{source}TR
+get_cmd: TRIG:IMP? {source}TR
+
+[Trigger {source} - Send Trig]
+section: Trigger
+group: External trigger input {source}
+label: Send Trig
+datatype: BUTTON
+set_cmd: TRIG {source}TR
