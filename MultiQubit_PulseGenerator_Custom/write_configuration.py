@@ -14,17 +14,7 @@ if __name__ == "__main__":
         signal_generator=True,
     )
     MAX_QUBITS = 9
-    qubit_list = [
-        'One',
-        'Two',
-        'Three',
-        'Four',
-        'Five',
-        'Six',
-        'Seven',
-        'Eight',
-        'Nine',
-    ]
+    qubit_list = list(range(1, MAX_QUBITS+1))
 
 
     #region Section: Sequence
@@ -71,7 +61,7 @@ if __name__ == "__main__":
     combo_qubits = LCombo(
         'Number of qubits',
         combo=qubit_list,
-        def_value=qubit_list[2],
+        def_value=qubit_list[1],
     )
     f.add_quantity(combo_qubits)
 
@@ -828,7 +818,7 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LDouble(
-            f'Plateau #{qubit}',
+            f'Plateau #{qubit}, Z',
             label='Plateau',
             def_value=0,
             low_lim=0,
@@ -853,7 +843,7 @@ if __name__ == "__main__":
 
     bool_extend_to_readout = LBoolean(
         'Extend Z offset to readout',
-        label='Activate',
+        label='Extend Z offset to readout',
         def_value=True,
         state_quant=bool_use_global_Z_offset,
         states=True,
@@ -1418,7 +1408,7 @@ if __name__ == "__main__":
         def_value=True,
     ))
 
-    MAX_CT_QUBITS = 5
+    MAX_CT_QUBITS = MAX_QUBITS
     for i in range(MAX_CT_QUBITS):
         f.add_quantity(LCombo(
             f'CT-matrix element #{i+1}',

@@ -440,8 +440,8 @@ class Sequence:
             Eight=8,
             Nine=9)
         # If the number of qubits changed, we need to re-init
-        if self.n_qubit != d[config.get('Number of qubits')]:
-            self.__init__(d[config.get('Number of qubits')])
+        if self.n_qubit != int(config.get('Number of qubits')):
+            self.__init__(int(config.get('Number of qubits')))
 
         # Readout
         self.readout_delay = config.get('Readout delay')
@@ -1196,22 +1196,10 @@ class SequenceToWaveforms:
             Configuration as defined by Labber driver configuration window
 
         """
-        # sequence parameters
-        d = dict(
-            Zero=0,
-            One=1,
-            Two=2,
-            Three=3,
-            Four=4,
-            Five=5,
-            Six=6,
-            Seven=7,
-            Eight=8,
-            Nine=9)
 
         # If the number of qubits changed, re-init to update pulses etc
-        if self.n_qubit != d[config.get('Number of qubits')]:
-            self.__init__(d[config.get('Number of qubits')])
+        if self.n_qubit != int(config.get('Number of qubits')):
+            self.__init__(int(config.get('Number of qubits')))
 
         self.dt = config.get('Pulse spacing')
         self.local_xy = config.get('Local XY control')
@@ -1307,7 +1295,7 @@ class SequenceToWaveforms:
                              config.get('Pulse type, 2QB'))(complex=False))
 
             if config.get('Pulse type, 2QB') in ['CZ', 'NetZero']:
-                pulse.F_Terms = d[config.get('Fourier terms, 2QB')]
+                pulse.F_Terms = int(config.get('Fourier terms, 2QB'))
                 if config.get('Uniform 2QB pulses'):
                     pulse.width = config.get('Width, 2QB')
                     pulse.plateau = config.get('Plateau, 2QB')
@@ -1322,24 +1310,24 @@ class SequenceToWaveforms:
                     pulse.qubit = self.qubits[n]
 
                 # Get Fourier values
-                if d[config.get('Fourier terms, 2QB')] == 4:
+                if int(config.get('Fourier terms, 2QB')) == 4:
                     pulse.Lcoeff = np.array([
                         config.get('L1, 2QB' + s),
                         config.get('L2, 2QB' + s),
                         config.get('L3, 2QB' + s),
                         config.get('L4, 2QB' + s)
                     ])
-                elif d[config.get('Fourier terms, 2QB')] == 3:
+                elif int(config.get('Fourier terms, 2QB')) == 3:
                     pulse.Lcoeff = np.array([
                         config.get('L1, 2QB' + s),
                         config.get('L2, 2QB' + s),
                         config.get('L3, 2QB' + s)
                     ])
-                elif d[config.get('Fourier terms, 2QB')] == 2:
+                elif int(config.get('Fourier terms, 2QB')) == 2:
                     pulse.Lcoeff = np.array(
                         [config.get('L1, 2QB' + s),
                          config.get('L2, 2QB' + s)])
-                elif d[config.get('Fourier terms, 2QB')] == 1:
+                elif int(config.get('Fourier terms, 2QB')) == 1:
                     pulse.Lcoeff = np.array([config.get('L1, 2QB' + s)])
 
                 pulse.Coupling = config.get('Coupling, 2QB' + s)
