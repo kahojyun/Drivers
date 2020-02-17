@@ -561,7 +561,6 @@ if __name__ == "__main__":
     pulse_square = 'Square'
     pulse_ramp = 'Ramp'
     pulse_cosine = 'Cosine'
-    # pulse_half_cosine = 'Half cosine'
 
     #region Section: 1-QB gates XY
     f.add_section('1-QB gates XY')
@@ -575,7 +574,6 @@ if __name__ == "__main__":
             pulse_square,
             pulse_ramp,
             pulse_cosine,
-            # pulse_half_cosine,
         ],
     )
     f.add_quantity(combo_pulse_type)
@@ -587,6 +585,15 @@ if __name__ == "__main__":
         state_quant=combo_pulse_type,
         states=[
             pulse_gaussian,
+        ],
+    ))
+
+    f.add_quantity(LBoolean(
+        'Half cosine',
+        def_value=False,
+        state_quant=combo_pulse_type,
+        states=[
+            pulse_cosine,
         ],
     ))
 
@@ -713,7 +720,7 @@ if __name__ == "__main__":
     #region Group: Pulse settings
     f.add_group('Pulse settings')
 
-    combo_pulse_type_Z = LCombo(
+    combo_pulse_type = LCombo(
         'Pulse type, Z',
         label='Pulse type',
         combo=[
@@ -724,16 +731,26 @@ if __name__ == "__main__":
             # pulse_half_cosine,
         ],
     )
-    f.add_quantity(combo_pulse_type_Z)
+    f.add_quantity(combo_pulse_type)
 
     f.add_quantity(LDouble(
         'Truncation range, Z',
         label='Truncation range',
         tooltip='Truncate at ? σ',
         def_value=3,
-        state_quant=combo_pulse_type_Z,
+        state_quant=combo_pulse_type,
         states=[
             pulse_gaussian,
+        ],
+    ))
+
+    f.add_quantity(LBoolean(
+        'Half cosine, Z',
+        label='Half cosine',
+        def_value=False,
+        state_quant=combo_pulse_type,
+        states=[
+            pulse_cosine,
         ],
     ))
 
@@ -741,35 +758,35 @@ if __name__ == "__main__":
         'Start at zero, Z',
         label='Start at zero',
         def_value=False,
-        state_quant=combo_pulse_type_Z,
+        state_quant=combo_pulse_type,
         states=[
             pulse_gaussian,
         ],
     ))
 
-    bool_uni_amp_Z = LBoolean(
+    bool_uni_amp = LBoolean(
         'Uniform amplitude, Z',
         label='Uniform amplitude',
         def_value=False,
     )
-    f.add_quantity(bool_uni_amp_Z)
+    f.add_quantity(bool_uni_amp)
 
     f.add_quantity(LDouble(
         'Amplitude, Z',
         label='Amplitude',
         def_value=1,
         unit='V',
-        state_quant=bool_uni_amp_Z,
+        state_quant=bool_uni_amp,
         states=True,
         show_in_measurement_dlg=True,
     ))
 
-    bool_uni_shape_Z = LBoolean(
+    bool_uni_shape = LBoolean(
         'Uniform pulse shape, Z',
         label='Uniform pulse shape',
         def_value=True,
     )
-    f.add_quantity(bool_uni_shape_Z)
+    f.add_quantity(bool_uni_shape)
 
     f.add_quantity(LDouble(
         'Width, Z',
@@ -777,7 +794,7 @@ if __name__ == "__main__":
         def_value=10e-9,
         low_lim=0,
         unit='s',
-        state_quant=bool_uni_shape_Z,
+        state_quant=bool_uni_shape,
         states=True,
         show_in_measurement_dlg=True,
     ))
@@ -788,7 +805,7 @@ if __name__ == "__main__":
         def_value=0,
         low_lim=0,
         unit='s',
-        state_quant=bool_uni_shape_Z,
+        state_quant=bool_uni_shape,
         states=True,
         show_in_measurement_dlg=True,
     ))
@@ -804,7 +821,7 @@ if __name__ == "__main__":
             label='Amplitude',
             def_value=1,
             unit='V',
-            state_quant=bool_uni_amp_Z,
+            state_quant=bool_uni_amp,
             states=False,
             show_in_measurement_dlg=True,
         ))
@@ -815,7 +832,7 @@ if __name__ == "__main__":
             def_value=10e-9,
             low_lim=0,
             unit='s',
-            state_quant=bool_uni_shape_Z,
+            state_quant=bool_uni_shape,
             states=False,
         ))
 
@@ -825,7 +842,7 @@ if __name__ == "__main__":
             def_value=0,
             low_lim=0,
             unit='s',
-            state_quant=bool_uni_shape_Z,
+            state_quant=bool_uni_shape,
             states=False,
         ))
     #endregion Group: Qubit #
@@ -950,7 +967,7 @@ if __name__ == "__main__":
     #region Group: 2-QB pulses
     f.add_group('2-QB pulses')
 
-    combo_pulse_type_2 = LCombo(
+    combo_pulse_type = LCombo(
         'Pulse type, 2QB',
         label='Pulse type',
         combo=[
@@ -963,16 +980,26 @@ if __name__ == "__main__":
         ],
         def_value=pulse_cz,
     )
-    f.add_quantity(combo_pulse_type_2)
+    f.add_quantity(combo_pulse_type)
 
     f.add_quantity(LDouble(
         'Truncation range, 2QB',
         label='Truncation range',
         tooltip='Truncate at ? σ',
         def_value=3,
-        state_quant=combo_pulse_type_2,
+        state_quant=combo_pulse_type,
         states=[
             pulse_gaussian,
+        ],
+    ))
+
+    f.add_quantity(LBoolean(
+        'Half cosine, 2QB',
+        label='Half cosine',
+        def_value=False,
+        state_quant=combo_pulse_type,
+        states=[
+            pulse_cosine,
         ],
     ))
 
@@ -980,17 +1007,17 @@ if __name__ == "__main__":
         'Start at zero, 2QB',
         label='Start at zero',
         def_value=False,
-        state_quant=combo_pulse_type_2,
+        state_quant=combo_pulse_type,
         states=[
             pulse_gaussian,
         ],
     ))
 
-    bool_uni_2 = LBoolean(
+    bool_uni = LBoolean(
         'Uniform 2QB pulses',
         def_value=True,
     )
-    f.add_quantity(bool_uni_2)
+    f.add_quantity(bool_uni)
 
     f.add_quantity(LDouble(
         'Width, 2QB',
@@ -998,7 +1025,7 @@ if __name__ == "__main__":
         def_value=50e-9,
         low_lim=0,
         unit='s',
-        state_quant=bool_uni_2,
+        state_quant=bool_uni,
         states=True,
         show_in_measurement_dlg=True,
     ))
@@ -1009,7 +1036,7 @@ if __name__ == "__main__":
         def_value=0,
         low_lim=0,
         unit='s',
-        state_quant=bool_uni_shape_Z,
+        state_quant=bool_uni_shape,
         states=True,
         show_in_measurement_dlg=True,
     ))
@@ -1025,7 +1052,7 @@ if __name__ == "__main__":
             'Number of fourier terms used to define the pulseshape of the '
             'C-phase gate'
         ),
-        state_quant=combo_pulse_type_2,
+        state_quant=combo_pulse_type,
         states=[
             pulse_cz,
             pulse_netzero,
@@ -1036,14 +1063,14 @@ if __name__ == "__main__":
 
     #region Group: 2-QB pulse #
     for i in range(MAX_QUBITS-1):
-        f.add_group(f'2-QB pulse #{i+1}{i+2}')
+        f.add_group(f'Qubit #{i+1}-#{i+2}')
 
         f.add_quantity(LDouble(
             f'Amplitude, 2QB #{i+1}{i+2}',
             label='Amplitude',
             def_value=1,
             unit='V',
-            state_quant=combo_pulse_type_2,
+            state_quant=combo_pulse_type,
             states=[
                 pulse_gaussian,
                 pulse_square,
@@ -1059,7 +1086,7 @@ if __name__ == "__main__":
             def_value=50e-9,
             low_lim=0,
             unit='s',
-            state_quant=bool_uni_2,
+            state_quant=bool_uni,
             states=False,
         ))
 
@@ -1069,7 +1096,7 @@ if __name__ == "__main__":
             def_value=0,
             low_lim=0,
             unit='s',
-            state_quant=bool_uni_2,
+            state_quant=bool_uni,
             states=False,
         ))
 
@@ -1081,7 +1108,7 @@ if __name__ == "__main__":
                 'Assumes a linear dependence between frequency and voltage. If '
                 'false, use the qubit spectrum.'
             ),
-            state_quant=combo_pulse_type_2,
+            state_quant=combo_pulse_type,
             states=[
                 pulse_cz,
                 pulse_netzero,
@@ -1097,7 +1124,7 @@ if __name__ == "__main__":
                 'Translating pulseshape from frequency space to voltage '
                 'assuming a linear dependence'
             ),
-            state_quant=combo_pulse_type_2,
+            state_quant=combo_pulse_type,
             states=[
                 pulse_cz,
                 pulse_netzero,
@@ -1113,7 +1140,7 @@ if __name__ == "__main__":
                 'Initial frequency splitting between the |11> state and the '
                 '|02> state'
             ),
-            state_quant=combo_pulse_type_2,
+            state_quant=combo_pulse_type,
             states=[
                 pulse_cz,
                 pulse_netzero,
@@ -1129,7 +1156,7 @@ if __name__ == "__main__":
                 'Smallest frequency splitting between the |11> state and the '
                 '|02> state during the C-phase gate'
             ),
-            state_quant=combo_pulse_type_2,
+            state_quant=combo_pulse_type,
             states=[
                 pulse_cz,
                 pulse_netzero,
@@ -1142,7 +1169,7 @@ if __name__ == "__main__":
             def_value=0.025e9,
             unit='Hz',
             tooltip='Coupling strength between |11> state and |02> state',
-            state_quant=combo_pulse_type_2,
+            state_quant=combo_pulse_type,
             states=[
                 pulse_cz,
                 pulse_netzero,
@@ -1182,7 +1209,7 @@ if __name__ == "__main__":
             label='Negative amplitude',
             def_value=False,
             tooltip='Flip the sign of the amplitude of the CZ pulse',
-            state_quant=combo_pulse_type_2,
+            state_quant=combo_pulse_type,
             states=[
                 pulse_cz,
                 pulse_netzero,
@@ -1471,7 +1498,6 @@ if __name__ == "__main__":
             pulse_square,
             pulse_ramp,
             pulse_cosine,
-            # pulse_half_cosine,
         ],
         def_value=pulse_square,
     )
@@ -1485,6 +1511,16 @@ if __name__ == "__main__":
         state_quant=combo_pulse_type,
         states=[
             pulse_gaussian,
+        ],
+    ))
+
+    f.add_quantity(LBoolean(
+        'Readout half cosine',
+        label='Half cosine',
+        def_value=False,
+        state_quant=combo_pulse_type,
+        states=[
+            pulse_cosine,
         ],
     ))
 

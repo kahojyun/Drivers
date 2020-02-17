@@ -1233,6 +1233,7 @@ class SequenceToWaveforms:
             pulse = (getattr(pulses, config.get('Pulse type'))(complex=True))
             # global parameters
             pulse.truncation_range = config.get('Truncation range')
+            pulse.half_cosine = config.get('Half cosine')
             pulse.start_at_zero = config.get('Start at zero')
             pulse.use_drag = config.get('Use DRAG')
             # pulse shape
@@ -1263,6 +1264,7 @@ class SequenceToWaveforms:
             pulse = (getattr(pulses,
                              config.get('Pulse type, Z'))(complex=False))
             pulse.truncation_range = config.get('Truncation range, Z')
+            pulse.half_cosine = config.get('Half cosine, Z')
             pulse.start_at_zero = config.get('Start at zero, Z')
             # pulse shape
             if config.get('Uniform pulse shape, Z'):
@@ -1340,6 +1342,7 @@ class SequenceToWaveforms:
 
             else:
                 pulse.truncation_range = config.get('Truncation range, 2QB')
+                pulse.half_cosine = config.get('Half cosine, 2QB')
                 pulse.start_at_zero = config.get('Start at zero, 2QB')
                 # pulse shape
                 if config.get('Uniform 2QB pulses'):
@@ -1412,6 +1415,7 @@ class SequenceToWaveforms:
             pulse = (getattr(pulses,
                              config.get('Readout pulse type'))(complex=True))
             pulse.truncation_range = config.get('Readout truncation range')
+            pulse.half_cosine = config.get('Readout half cosine')
             pulse.start_at_zero = config.get('Readout start at zero')
             pulse.iq_skew = config.get('Readout IQ skew') * np.pi / 180
             pulse.iq_ratio = config.get('Readout I/Q ratio')

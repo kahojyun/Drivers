@@ -204,24 +204,51 @@ class Square(Pulse):
 
 
 class Cosine(Pulse):
+    def __init__(self, complex):
+        super().__init__(complex)
+        self.half_cosine = False
+
     def total_duration(self):
         return self.width + self.plateau
 
     def calculate_envelope(self, t0, t):
         tau = self.width
         if self.plateau == 0:
-            values = (self.amplitude / 2 *
-                      (1 - np.cos(2 * np.pi * (t - t0 + tau / 2) / tau)))
+            if self.half_cosine:
+                values = (self.amplitude * np.cos(np.pi * (t - t0) / tau))
+            else:
+                values = (
+                    self.amplitude / 2 *
+                    (1 - np.cos(2 * np.pi * (t - t0 + tau / 2) / tau))
+                )
         else:
             values = np.ones_like(t) * self.amplitude
-            values[t < t0 - self.plateau / 2] = self.amplitude / 2 * \
-                (1 - np.cos(2 * np.pi *
-                            (t[t < t0 - self.plateau / 2] - t0 +
-                             self.plateau / 2 + tau / 2) / tau))
-            values[t > t0 + self.plateau / 2] = self.amplitude / 2 * \
-                (1 - np.cos(2 * np.pi *
-                            (t[t > t0 + self.plateau / 2] - t0 -
-                             self.plateau / 2 + tau / 2) / tau))
+            if self.half_cosine:
+                values[t < t0 - self.plateau / 2] = (
+                    self.amplitude * np.cos(
+                        np.pi * (
+                            t[t < t0 - self.plateau / 2] - t0 + self.plateau / 2
+                        ) / tau
+                    )
+                )
+                values[t > t0 + self.plateau / 2] = (
+                    self.amplitude * np.cos(
+                        np.pi * (
+                            t[t > t0 + self.plateau / 2] - t0 - self.plateau / 2
+                        ) / tau
+                    )
+                )
+            else:
+                values[t < t0 - self.plateau / 2] = (
+                    self.amplitude / 2 * (
+                        1 - np.cos(2 * np.pi * (
+                            t[t < t0 - self.plateau / 2] - t0 +
+                            self.plateau / 2 + tau / 2) / tau)))
+                values[t > t0 + self.plateau / 2] = (
+                    self.amplitude / 2 * (
+                        1 - np.cos(2 * np.pi * (
+                            t[t > t0 + self.plateau / 2] - t0 -
+                            self.plateau / 2 + tau / 2) / tau)))
 
         return values
 
