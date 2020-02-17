@@ -473,7 +473,7 @@ class LButton(LQuantity):
 
 class LDriverDefinition:
     def __init__(self, filename):
-        self.file = open(filename, 'w')
+        self.file = open(filename, 'w', encoding='utf-8')
         self.section = None
         self.group = None
     
