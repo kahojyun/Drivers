@@ -1379,15 +1379,46 @@ if __name__ == "__main__":
     for i in range(MAX_QUBITS):
         qubit = i+1
         f.add_group(f'Z{qubit}')
+
+        bool_from_str = LBoolean(
+            f'Predistort Z{qubit} - from string',
+            label='From representation string',
+            def_value=False,
+        )
+        f.add_quantity(bool_from_str)
+
         for j in range(Z_PREDISTORTION_TERMS):
             f.add_quantity(LDouble(
                 f'Predistort Z{qubit} - A{j+1}',
                 label=f'A{j+1}',
+                state_quant=bool_from_str,
+                states=False,
             ))
             f.add_quantity(LDouble(
                 f'Predistort Z{qubit} - tau{j+1}',
                 label=f'tau{j+1}',
+                state_quant=bool_from_str,
+                states=False,
             ))
+
+        f.add_quantity(LDouble(
+            f'Predistort Z{qubit} - tauC',
+            label=f'tauC',
+            tooltip='Time constant for capacitor.',
+            state_quant=bool_from_str,
+            states=False,
+        ))
+
+        f.add_quantity(LString(
+            f'Predistort Z{qubit} - string',
+            label=f'Representation string',
+            tooltip=(
+                'String representation for `Filter`, eg. Filter(fs=..., A=..., '
+                'B=..., C=...)'
+            ),
+            state_quant=bool_from_str,
+            states=True,
+        ))
     #endregion Group: Z
     #endregion Section: Predistortion
 

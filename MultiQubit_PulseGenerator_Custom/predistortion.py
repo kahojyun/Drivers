@@ -13,6 +13,7 @@
 import numpy as np
 from numpy.fft import fft, fftfreq, fftshift, ifft, ifftshift
 from scipy.interpolate import interp1d
+import scipy.signal as signal
 
 
 class Predistortion(object):
@@ -130,8 +131,83 @@ class Predistortion(object):
         return fft_vals, fft_signal
 
 
+class Filter:
+    r"""Filter signal with cascaded IIR filters and a FIR filter.
+    
+    All IIR filters are first order, aiming to compensate distortion
+    in signal.
+
+    Transfer function of normal IIR filter:
+    .. math::
+        H(s) = 1 + \frac{A s}{s + B}
+    
+    Transfer function of IIR filter for compensating DC block effect:
+    .. math::
+        H(s) = 1 + \frac{s}{s + C}
+
+    Parameters
+    ----------
+    fs : float
+        Sample rate
+    A : array_like
+        Coefficients for IIR filter
+    B : array_like
+        Coefficients for IIR filter
+    F : array_like, optional
+        Coefficients for FIR filter
+    gain : :obj:`float`, optional
+    offset : :obj:`float`, optional
+    C : :obj:`float`, optional
+        If set, use an IIR filter to compensate DC block effect of capacitor.
+    """
+
+    def __init__(self, fs, A, B, F=None, gain=1, offset=0, C=None):
+        self.fs = fs
+        self.A = np.array(A, dtype='f8')
+        self.B = np.array(B, dtype='f8')
+        self.F = np.array(F, dtype='f8') if F is not None else None
+        self.gain = gain
+        self.offset = offset
+        self.C = C
+        
+    def lfilter(self, data):
+        """Applys filter to data.
+        
+        Parameters
+        ----------
+        data：array_like
+            Waveform to apply filter
+        
+        Returns
+        -------
+        waveform: ndarray
+            Filtered waveform
+        """
+        if len(self.A) != len(self.B):
+            raise Exception('len(A) != len(B)')
+        if self.C is not None:
+            z, p = signal.bilinear([1., 0.], [1., self.C], self.fs)
+            data = signal.lfilter(p, z, data)
+        for i in range(len(self.A)):
+            z, p = signal.bilinear([1+self.A[i], self.B[i]], [1, self.B[i]], self.fs)
+            data = signal.lfilter(p, z, data)
+        if self.F is not None:
+            data = signal.lfilter(self.F, [1.], data)
+        return data*self.gain + self.offset
+    
+    def get_response_time(self):
+        return 6 * (1/self.B).max()
+    
+    def __repr__(self):
+        return (
+            f'Filter(fs={self.fs}, A={self.A!r}, B={self.B!r}, '
+            f'F={self.F!r}, gain={self.gain}, offset={self.offset}, '
+            f'C={self.C})'
+        )
+
+
 class ExponentialPredistortion:
-    """Implement a four-pole predistortion on the Z waveforms.
+    """Implement predistortion on the Z waveforms.
 
     Parameters
     ----------
@@ -156,9 +232,14 @@ class ExponentialPredistortion:
         Amplitude for the fourth pole.
     tau4 : float
         Time constant for the fourth pole.
-    dt : float
-        Sample spacing for the waveform.
-
+    tauC : float
+        Time constant for capacitor.
+    from_str : bool
+        If true, use ``filter_str`` to construct :obj:`Filter`.
+    filter_str: str
+        String representation of :obj:`Filter`.
+    fs : float
+        Sample rate for the waveform.
     """
 
     def __init__(self, waveform_number):
@@ -170,7 +251,7 @@ class ExponentialPredistortion:
         self.tau3 = 0
         self.A4 = 0
         self.tau4 = 0
-        self.dt = 1
+        self.fs = 1
         self.n = int(waveform_number)
 
     def set_parameters(self, config={}):
@@ -183,17 +264,31 @@ class ExponentialPredistortion:
 
         """
         m = self.n + 1
-        self.A1 = config.get('Predistort Z{} - A1'.format(m))
-        self.tau1 = config.get('Predistort Z{} - tau1'.format(m))
-        self.A2 = config.get('Predistort Z{} - A2'.format(m))
-        self.tau2 = config.get('Predistort Z{} - tau2'.format(m))
+        self.fs = config.get('Sample rate')
+        self.use_str = bool(config.get('Predistort Z{} - from string'.format(m)))
+        if self.use_str:
+            self.filter_str = config.get('Predistort Z{} - string'.format(m))
+            from numpy import array
+            try:
+                self._filter = eval(self.filter_str)
+            except:
+                self._filter = Filter(self.fs, [], [])
+        else:
+            A = []
+            B = []
+            for i in range(4):
+                Ai = config.get(f'Predistort Z{m} - A{i+1}')
+                taui = config.get(f'Predistort Z{m} - tau{i+1}')
+                if Ai != 0 and taui > 0:
+                    A.append(Ai)
+                    B.append(1/taui)
+            tauC = config.get(f'Predistort Z{m} - tauC')
+            if tauC > 0:
+                C = 1/tauC
+            else:
+                C = None
+            self._filter = Filter(self.fs, A, B, C=C)
 
-        self.A3 = config.get('Predistort Z{} - A3'.format(m))
-        self.tau3 = config.get('Predistort Z{} - tau3'.format(m))
-        self.A4 = config.get('Predistort Z{} - A4'.format(m))
-        self.tau4 = config.get('Predistort Z{} - tau4'.format(m))
-
-        self.dt = 1 / config.get('Sample rate')
 
     def predistort(self, waveform):
         """Predistort input waveform.
@@ -209,28 +304,15 @@ class ExponentialPredistortion:
             Pre-distorted waveform
 
         """
-        # pad with zeros at end to make sure response has time to go to zero
-        pad_time = 6 * max([self.tau1, self.tau2, self.tau3, self.tau4])
-        padded = np.zeros(len(waveform) + round(pad_time / self.dt))
-        padded[:len(waveform)] = waveform
-
-        Y = np.fft.rfft(padded, norm='ortho')
-
-        omega = 2 * np.pi * np.fft.rfftfreq(len(padded), self.dt)
-        H = (1 +
-             (1j * self.A1 * omega * self.tau1) /
-             (1j * omega * self.tau1 + 1) +
-             (1j * self.A2 * omega * self.tau2) /
-             (1j * omega * self.tau2 + 1) +
-             (1j * self.A3 * omega * self.tau3) /
-             (1j * omega * self.tau3 + 1) +
-             (1j * self.A4 * omega * self.tau4) /
-             (1j * omega * self.tau4 + 1))
-
-        Yc = Y / H
-
-        yc = np.fft.irfft(Yc, norm='ortho')
-        return yc[:len(waveform)]
+        # # pad with zeros at end to make sure response has time to go to zero
+        # pad_time = self._filter.get_response_time()
+        # padded = np.pad(
+        #     waveform,
+        #     (0, round(pad_time * self.fs)),
+        #     mode='constant'
+        #     constant_values=0,
+        # )
+        return self._filter.lfilter(waveform)
 
 
 if __name__ == '__main__':
