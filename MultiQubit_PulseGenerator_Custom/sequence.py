@@ -128,7 +128,6 @@ class Step:
             raise ValueError("Qubit index should be int.")
 
         def _in(input_list, n):
-            flat_list = []
             for sublist_or_el in input_list:
                 if isinstance(sublist_or_el, list):
                     if _in(sublist_or_el, n) is True:
@@ -427,18 +426,6 @@ class Sequence:
             Configuration as defined by Labber driver configuration window
 
         """
-        # sequence parameters
-        d = dict(
-            Zero=0,
-            One=1,
-            Two=2,
-            Three=3,
-            Four=4,
-            Five=5,
-            Six=6,
-            Seven=7,
-            Eight=8,
-            Nine=9)
         # If the number of qubits changed, we need to re-init
         if self.n_qubit != int(config.get('Number of qubits')):
             self.__init__(int(config.get('Number of qubits')))
