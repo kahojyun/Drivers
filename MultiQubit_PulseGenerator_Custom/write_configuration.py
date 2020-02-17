@@ -582,6 +582,7 @@ if __name__ == "__main__":
 
     f.add_quantity(LDouble(
         'Truncation range',
+        tooltip='Truncate at ? σ',
         def_value=3,
         state_quant=combo_pulse_type,
         states=[
@@ -728,6 +729,7 @@ if __name__ == "__main__":
     f.add_quantity(LDouble(
         'Truncation range, Z',
         label='Truncation range',
+        tooltip='Truncate at ? σ',
         def_value=3,
         state_quant=combo_pulse_type_Z,
         states=[
@@ -966,6 +968,7 @@ if __name__ == "__main__":
     f.add_quantity(LDouble(
         'Truncation range, 2QB',
         label='Truncation range',
+        tooltip='Truncate at ? σ',
         def_value=3,
         state_quant=combo_pulse_type_2,
         states=[
@@ -1446,6 +1449,7 @@ if __name__ == "__main__":
     f.add_quantity(LDouble(
         'Readout truncation range',
         label='Truncation range',
+        tooltip='Truncate at ? σ',
         def_value=3,
         state_quant=combo_pulse_type,
         states=[

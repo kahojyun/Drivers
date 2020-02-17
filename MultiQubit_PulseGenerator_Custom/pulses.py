@@ -131,13 +131,14 @@ class Gaussian(Pulse):
         self.truncation_range = 5
 
     def total_duration(self):
-        return self.truncation_range * self.width + self.plateau
+        return 2 * self.width + self.plateau
 
     def calculate_envelope(self, t0, t):
-        # width is two t std
-        # std = self.width/2;
-        # alternate; std is set to give total pulse area same as a square
-        std = self.width / np.sqrt(2 * np.pi)
+        # width == 2 * truncation_range * std
+        if self.truncation_range == 0:
+            std = np.inf
+        else:
+            std = self.width / 2 / self.truncation_range
         values = np.zeros_like(t)
         if self.plateau == 0:
             # pure gaussian, no plateau
@@ -157,9 +158,9 @@ class Gaussian(Pulse):
                 values += ((t >= (t0 + self.plateau / 2)) * np.exp(
                     -(t - (t0 + self.plateau / 2))**2 / (2 * std**2)))
 
-        # TODO  Fix this
         if self.start_at_zero:
             values = values - values.min()
+            # renormalize max value to 1
             values = values / values.max()
         values = values * self.amplitude
 
