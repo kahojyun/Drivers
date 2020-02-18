@@ -1399,13 +1399,24 @@ if __name__ == "__main__":
         'Predistort Z',
         def_value=False,
     ))
+
+    bool_uni = LBoolean(
+        'Uniform predistort Z',
+        def_value=False,
+    )
+    f.add_quantity(bool_uni)
+    
     #endregion Group: Z Predistortion
 
     #region Group: Z
     Z_PREDISTORTION_TERMS = 4
-    for i in range(MAX_QUBITS):
-        qubit = i+1
-        f.add_group(f'Z{qubit}')
+    for i in range(-1, MAX_QUBITS):
+        if i == -1:
+            qubit = ''
+            f.add_group('Uniform predistort Z')
+        else:
+            qubit = i+1
+            f.add_group(f'Qubit #{qubit}')
 
         bool_from_str = LBoolean(
             f'Predistort Z{qubit} - from string',

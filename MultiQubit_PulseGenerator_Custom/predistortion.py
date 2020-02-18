@@ -263,11 +263,14 @@ class ExponentialPredistortion:
             Configuration as defined by Labber driver configuration window
 
         """
-        m = self.n + 1
+        if bool(config.get('Uniform predistort Z')):
+            m=''
+        else:
+            m = self.n + 1
         self.fs = config.get('Sample rate')
-        self.use_str = bool(config.get('Predistort Z{} - from string'.format(m)))
+        self.use_str = bool(config.get(f'Predistort Z{m} - from string'))
         if self.use_str:
-            self.filter_str = config.get('Predistort Z{} - string'.format(m))
+            self.filter_str = config.get(f'Predistort Z{m} - string')
             from numpy import array
             try:
                 self._filter = eval(self.filter_str)
