@@ -157,9 +157,9 @@ class Driver(VISA_Driver):
             # channels are numbered 1-8
             channel = n+1
             vData = self.getValueArray(f'Ch {channel}')
-            vMark = [[]]*self.nMarker
+            vMark = []
             for m in range(self.nMarker):
-                vMark[m] = self.getValueArray(f'Ch {channel} - Marker {m+1}')
+                vMark.append(self.getValueArray(f'Ch {channel} - Marker {m+1}'))
             bWaveUpdate = self.sendWaveformToTek(channel, vData, vMark, seq)
         # check if sequence mode
         if seq is not None:
@@ -207,7 +207,7 @@ class Driver(VISA_Driver):
             # Assign sequence to channels
             for n, bUpdate in enumerate(self.lInUse):
                 if bUpdate:
-                    self.writeAndLog(f':SOUR{n+1}:CASS:SEQ "Labber_SEQ",{n+1}')
+                    self.writeAndLog(f':SOUR{n+1}:CASS:SEQ "{filename}",{n+1}')
             # turn on all output
             self.sendValueToOther('All output off', False)
             return
