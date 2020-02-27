@@ -8,7 +8,7 @@ import numpy as np
 
 from BaseDriver import LabberDriver
 from sequence_builtin import (
-    CPMG, PulseTrain, Rabi, SpinLocking, ReadoutTraining)
+    CPMG, PulseTrain, Rabi, SpinLocking, ReadoutTraining, GenericSequence)
 from sequence_rb import SingleQubit_RB, TwoQubit_RB
 from sequence import SequenceToWaveforms
 import logging
@@ -22,6 +22,7 @@ SEQUENCES = {'Rabi': Rabi,
              '2-QB Randomized Benchmarking': TwoQubit_RB,
              'Spin-locking': SpinLocking,
              'Readout training': ReadoutTraining,
+             'Generic': GenericSequence,
              'Custom': type(None)}
 
 

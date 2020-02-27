@@ -22,6 +22,7 @@ class Demodulation(object):
         self.n_qubit = n_qubit
         self.sample_rate = 1E9
         self.frequencies = np.zeros(self.n_qubit)
+        self.enabled = np.full(self.n_qubit, True)
 
         # demodulation
         self.demod_skip = 0.0
@@ -45,6 +46,7 @@ class Demodulation(object):
         # demodulation
         for n in range(self.n_qubit):
             self.frequencies[n] = config.get('Readout frequency #%d' % (n + 1))
+            self.enabled[n] = config.get('Readout enabled #%d' % (n + 1))
         self.demod_skip = config.get('Demodulation - Skip')
         self.demod_length = config.get('Demodulation - Length')
         self.freq_offset = config.get('Demodulation - Frequency offset')
@@ -78,7 +80,7 @@ class Demodulation(object):
         frequency = self.frequencies[n] - self.freq_offset
         n_segment = int(self.n_records)
         # get input data from dict, with keys {'y': value, 't0': t0, 'dt': dt}
-        if signal is None:
+        if signal is None or not self.enabled[n]:
             return np.zeros(n_segment, dtype=complex)
         vY = signal['y']
         dt = signal['dt']
@@ -149,7 +151,7 @@ class Demodulation(object):
         frequency = self.frequencies[n] - self.freq_offset
         n_segment = int(self.n_records)
         # get input data from dict, with keys {'y': value, 't0': t0, 'dt': dt}
-        if signal_i is None or signal_q is None:
+        if signal_i is None or signal_q is None or not self.enabled[n]:
             return np.zeros(n_segment, dtype=complex)
         vI = signal_i['y']
         vQ = signal_q['y']

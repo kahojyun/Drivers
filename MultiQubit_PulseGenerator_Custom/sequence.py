@@ -223,7 +223,12 @@ class Sequence:
         if self.readout_delay > 0:
             delay = gates.IdentityGate(width=self.readout_delay)
             self.add_gate_to_all(delay, dt=0)
-        self.add_gate_to_all(gates.ReadoutGate(), dt=0, align='left')
+        qubit = [
+            i for i in range(self.n_qubit)
+            if config.get(f'Readout enabled #{i+1}')
+        ]
+        gate = [gates.ReadoutGate()] * len(qubit)
+        self.add_gate(qubit, gate, dt=0, align='left')
 
         return self
 
@@ -231,6 +236,7 @@ class Sequence:
     def add_single_pulse(self,
                          qubit,
                          pulse,
+                         line,
                          t0=None,
                          dt=None,
                          align_left=False):
@@ -249,6 +255,9 @@ class Sequence:
         pulse : :obj:`Pulse`
             Definition of pulse to add.
 
+        line : {'XY', 'Z'}
+            Which control line the pulse should add to.
+
         t0 : float, optional
             Absolute pulse position.
 
@@ -259,7 +268,7 @@ class Sequence:
             If True, aligns the pulse to the left. Defaults to False.
 
         """
-        gate = gates.CustomGate(pulse)
+        gate = gates.CustomGate(pulse, line)
         if align_left is True:
             self.add_gate(qubit, gate, t0, dt, 'left')
         else:
@@ -1080,7 +1089,11 @@ class SequenceToWaveforms:
                 if isinstance(gate_obj,
                               (gates.IdentityGate, gates.VirtualZGate)):
                     continue
-                elif isinstance(gate_obj, gates.SingleQubitZRotation):
+                elif (isinstance(gate_obj, gates.SingleQubitZRotation) or (
+                    isinstance(gate_obj, gates.CustomGate) and
+                    gate_obj.line == 'Z'
+                )
+                ):
                     waveform = self._wave_z[qubit]
                     delay = self.wave_z_delays[qubit]
                     if self.compensate_crosstalk:
@@ -1093,7 +1106,11 @@ class SequenceToWaveforms:
                     if self.compensate_crosstalk:
                         crosstalk = self._crosstalk.compensation_matrix[:,
                                                                         qubit]
-                elif isinstance(gate_obj, gates.SingleQubitXYRotation):
+                elif (isinstance(gate_obj, gates.SingleQubitXYRotation) or (
+                    isinstance(gate_obj, gates.CustomGate) and
+                    gate_obj.line == 'XY'
+                )
+                ):
                     waveform = self._wave_xy[qubit]
                     delay = self.wave_xy_delays[qubit]
                 elif isinstance(gate_obj, gates.ReadoutGate):
@@ -1422,7 +1439,7 @@ class SequenceToWaveforms:
             if config.get('Uniform readout amplitude') is True:
                 pulse.amplitude = config.get('Readout amplitude')
             else:
-                pulse.amplitude = config.get('Readout amplitude #%d' % (n + 1))
+                pulse.amplitude = config.get('Readout amplitude #%d' % m)
 
             pulse.frequency = config.get('Readout frequency #%d' % m)
             self.pulses_readout[n] = pulse

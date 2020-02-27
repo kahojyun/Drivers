@@ -4,7 +4,10 @@ import logging
 import numpy as np
 
 import gates
+import pulses
 from sequence import Sequence
+
+import write_configuration as CONST
 
 log = logging.getLogger('LabberDriver')
 
@@ -171,6 +174,51 @@ class ReadoutTraining(Sequence):
                     gate_list.append(gates.Xp)
 
             self.add_gate(qubit_list, gate_list)
+
+
+class GenericSequence(Sequence):
+    """Generic sequence supporting custom pulse.
+
+    """
+
+    def generate_sequence(self, config):
+        """Generate sequence by adding gates/pulses to waveforms."""
+
+        pulse_n = int(config['Generic - Pulse number'])
+        for i in range(pulse_n):
+            qubit = int(config[f'Generic - Add to qubit #{i+1}'])-1
+            line = config[f'Generic - Add to line #{i+1}']
+
+            t0 = None
+            dt = None
+            timing = config[f'Generic - Pulse timing #{i+1}']
+            if timing == CONST.TIMING_ABS:
+                t0 = config[f'Generic - Pulse absolute time #{i+1}']
+            elif timing == CONST.TIMING_REL:
+                dt = config[f'Generic - Pulse relative time #{i+1}']
+
+            # Construct pulse
+            pulse_type = config[f'Generic - Pulse type #{i+1}']
+            if line == 'XY':
+                pulse = getattr(pulses, pulse_type)(complex=True)
+                pulse.use_drag = config[f'Generic - Use DRAG #{i+1}']
+                if pulse.use_drag:
+                    pulse.drag_coefficient = config[f'Generic - DRAG scaling #{i+1}']
+                    pulse.drag_detuning = config[f'Generic - DRAG frequency detuning #{i+1}']
+            else: # line == 'Z'
+                pulse = getattr(pulses, pulse_type)(complex=False)
+            pulse.amplitude = config[f'Generic - Amplitude #{i+1}']
+            pulse.width = config[f'Generic - Width #{i+1}']
+            pulse.plateau = config[f'Generic - Plateau #{i+1}']
+            pulse.frequency = config[f'Generic - Frequency #{i+1}']
+            pulse.phase = config[f'Generic - Phase #{i+1}'] * np.pi / 180
+            pulse.start_at_zero = config.get(f'Generic - Start at zero #{i+1}')
+            if pulse_type == CONST.PULSE_GAUSSIAN:
+                pulse.truncation_range = config[f'Generic - Truncation range #{i+1}']
+            elif pulse_type == CONST.PULSE_COSINE:
+                pulse.half_cosine = config[f'Generic - Half cosine #{i+1}']
+
+            self.add_single_pulse(qubit, pulse, line, t0=t0, dt=dt)
 
 
 if __name__ == '__main__':

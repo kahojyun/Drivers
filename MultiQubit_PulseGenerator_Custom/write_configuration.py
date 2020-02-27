@@ -1,6 +1,34 @@
 from driver_config import *
 from pathlib import Path
+MAX_QUBITS = 9
+MAX_GENERIC_PULSE = 10
+MAX_FOURIER_TERMS = 4
+MAX_CT_QUBITS = MAX_QUBITS
+Z_PREDISTORTION_TERMS = 4
 
+# pulse timing options
+TIMING_NONE = 'Default spacing'
+TIMING_ABS = 'Absolute'
+TIMING_REL = 'Relative to previous pulse'
+
+# pulse types
+PULSE_GAUSSIAN = 'Gaussian'
+PULSE_SQUARE = 'Square'
+PULSE_RAMP = 'Ramp'
+PULSE_COSINE = 'Cosine'
+PULSES_1QB = [
+    PULSE_GAUSSIAN,
+    PULSE_SQUARE,
+    PULSE_RAMP,
+    PULSE_COSINE,
+]
+# 2qb
+PULSE_CZ = 'CZ'
+PULSE_NETZERO = 'NetZero'
+PULSES_2QB = [
+    PULSE_CZ,
+    PULSE_NETZERO,
+]
 
 if __name__ == "__main__":
     # General setting
@@ -8,14 +36,12 @@ if __name__ == "__main__":
     f = LDriverDefinition(dir_path/'MultiQubit_PulseGenerator_Custom.ini')
     f.add_general_settings(
         name='Multi-Qubit Pulse Generator Custom',
-        version='1.2.0',
+        version='1.3.0',
         driver_path='MultiQubit_PulseGenerator_Custom',
         signal_analyzer=True,
         signal_generator=True,
     )
-    MAX_QUBITS = 9
     qubit_list = list(range(1, MAX_QUBITS+1))
-
 
     #region Section: Sequence
     f.add_section('Sequence')
@@ -30,7 +56,7 @@ if __name__ == "__main__":
     seq_slock = 'Spin-locking'
     seq_rtrain = 'Readout training'
     seq_custom = 'Custom'
-    # seq_gen = 'Generic'
+    seq_gen = 'Generic'
     combo_seq = LCombo(
         'Sequence',
         combo=[
@@ -42,7 +68,7 @@ if __name__ == "__main__":
             seq_slock,
             seq_rtrain,
             seq_custom,
-            # seq_gen,
+            seq_gen,
         ],
         show_in_measurement_dlg=True,
     )
@@ -501,6 +527,176 @@ if __name__ == "__main__":
     #endregion Group: Custom
     #endregion Section: Sequence
 
+    #region Section: Generic sequence
+    f.add_section('Generic sequence')
+
+    f.add_group('Generic sequence')
+    f.add_quantity(LCombo(
+        'Generic - Pulse number',
+        label='number of pulses',
+        combo=list(range(1, MAX_GENERIC_PULSE+1)),
+    ))
+
+    #region Group: Pulse
+    for i in range(MAX_GENERIC_PULSE):
+        f.add_group(f'Pulse #{i+1}')
+
+        f.add_quantity(LCombo(
+            f'Generic - Add to qubit #{i+1}',
+            label='Add to qubit',
+            combo=qubit_list,
+        ))
+
+        combo_line = LCombo(
+            f'Generic - Add to line #{i+1}',
+            label='Add to line',
+            combo=[
+                'XY',
+                'Z',
+            ],
+        )
+        f.add_quantity(combo_line)
+        
+        combo_step_timing = LCombo(
+            f'Generic - Pulse timing #{i+1}',
+            label='Pulse timing',
+            combo=[
+                TIMING_NONE,
+                TIMING_ABS,
+                TIMING_REL,
+            ],
+        )
+        f.add_quantity(combo_step_timing)
+
+        f.add_quantity(LDouble(
+            f'Generic - Pulse absolute time #{i+1}',
+            label='Absolute time',
+            tooltip='Absolute time of the pulse center',
+            def_value=100e-9,
+            unit='s',
+            state_quant=combo_step_timing,
+            states=[
+                TIMING_ABS,
+            ],
+        ))
+
+        f.add_quantity(LDouble(
+            f'Generic - Pulse relative time #{i+1}',
+            label='Relative time',
+            tooltip='Spacing to previous pulse',
+            def_value=100e-9,
+            unit='s',
+            state_quant=combo_step_timing,
+            states=[
+                TIMING_REL,
+            ],
+        ))
+
+        combo_pulse_type = LCombo(
+            f'Generic - Pulse type #{i+1}',
+            label='Pulse type',
+            combo=PULSES_1QB,
+        )
+        f.add_quantity(combo_pulse_type)
+
+        f.add_quantity(LDouble(
+            f'Generic - Truncation range #{i+1}',
+            label='Truncation range',
+            tooltip='Truncate at ? σ',
+            def_value=3,
+            state_quant=combo_pulse_type,
+            states=[
+                PULSE_GAUSSIAN,
+            ],
+        ))
+
+        f.add_quantity(LBoolean(
+            f'Generic - Half cosine #{i+1}',
+            label='Half cosine',
+            def_value=False,
+            state_quant=combo_pulse_type,
+            states=[
+                PULSE_COSINE,
+            ],
+        ))
+
+        f.add_quantity(LBoolean(
+            f'Generic - Start at zero #{i+1}',
+            label='Start at zero',
+            def_value=False,
+            state_quant=combo_pulse_type,
+            states=[
+                PULSE_GAUSSIAN,
+            ],
+        ))
+
+        bool_use_drag = LBoolean(
+            f'Generic - Use DRAG #{i+1}',
+            label='Use DRAG',
+            def_value=False,
+            state_quant=combo_line,
+            states=[
+                'XY',
+            ],
+        )
+        f.add_quantity(bool_use_drag)
+
+        f.add_quantity(LDouble(
+            f'Generic - Amplitude #{i+1}',
+            label='Amplitude',
+            def_value=1,
+            unit='V',
+        ))
+
+        f.add_quantity(LDouble(
+            f'Generic - Phase #{i+1}',
+            label='Phase',
+            def_value=0,
+            unit='deg',
+        ))
+
+        f.add_quantity(LDouble(
+            f'Generic - Width #{i+1}',
+            label='Width',
+            def_value=10e-9,
+            low_lim=0,
+            unit='s',
+        ))
+
+        f.add_quantity(LDouble(
+            f'Generic - Plateau #{i+1}',
+            label='Plateau',
+            def_value=0,
+            low_lim=0,
+            unit='s',
+        ))
+
+        f.add_quantity(LDouble(
+            f'Generic - Frequency #{i+1}',
+            label='Frequency',
+            unit='Hz',
+        ))
+
+        f.add_quantity(LDouble(
+            f'Generic - DRAG scaling #{i+1}',
+            label='DRAG scaling',
+            def_value=0.25e-9,
+            unit='s',
+            state_quant=bool_use_drag,
+            states=True,
+        ))
+
+        f.add_quantity(LDouble(
+            f'Generic - DRAG frequency detuning #{i+1}',
+            label='DRAG frequency detuning',
+            def_value=0,
+            unit='Hz',
+            state_quant=bool_use_drag,
+            states=True,
+        ))
+    #endregion Group: Step
+    #endregion Section: Generic sequence
+
     #region Section: Waveform
     f.add_section('Waveform')
     #region Group: Waveform
@@ -557,11 +753,6 @@ if __name__ == "__main__":
     #endregion Group: Delays
     #endregion Section: Waveform
 
-    pulse_gaussian = 'Gaussian'
-    pulse_square = 'Square'
-    pulse_ramp = 'Ramp'
-    pulse_cosine = 'Cosine'
-
     #region Section: 1-QB gates XY
     f.add_section('1-QB gates XY')
     #region Group: Pulse settings
@@ -569,12 +760,7 @@ if __name__ == "__main__":
 
     combo_pulse_type = LCombo(
         'Pulse type',
-        combo=[
-            pulse_gaussian,
-            pulse_square,
-            pulse_ramp,
-            pulse_cosine,
-        ],
+        combo=PULSES_1QB,
     )
     f.add_quantity(combo_pulse_type)
 
@@ -584,7 +770,7 @@ if __name__ == "__main__":
         def_value=3,
         state_quant=combo_pulse_type,
         states=[
-            pulse_gaussian,
+            PULSE_GAUSSIAN,
         ],
     ))
 
@@ -593,7 +779,7 @@ if __name__ == "__main__":
         def_value=False,
         state_quant=combo_pulse_type,
         states=[
-            pulse_cosine,
+            PULSE_COSINE,
         ],
     ))
 
@@ -602,7 +788,7 @@ if __name__ == "__main__":
         def_value=False,
         state_quant=combo_pulse_type,
         states=[
-            pulse_gaussian,
+            PULSE_GAUSSIAN,
         ],
     ))
 
@@ -723,13 +909,7 @@ if __name__ == "__main__":
     combo_pulse_type = LCombo(
         'Pulse type, Z',
         label='Pulse type',
-        combo=[
-            pulse_gaussian,
-            pulse_square,
-            pulse_ramp,
-            pulse_cosine,
-            # pulse_half_cosine,
-        ],
+        combo=PULSES_1QB,
     )
     f.add_quantity(combo_pulse_type)
 
@@ -740,7 +920,7 @@ if __name__ == "__main__":
         def_value=3,
         state_quant=combo_pulse_type,
         states=[
-            pulse_gaussian,
+            PULSE_GAUSSIAN,
         ],
     ))
 
@@ -750,7 +930,7 @@ if __name__ == "__main__":
         def_value=False,
         state_quant=combo_pulse_type,
         states=[
-            pulse_cosine,
+            PULSE_COSINE,
         ],
     ))
 
@@ -760,7 +940,7 @@ if __name__ == "__main__":
         def_value=False,
         state_quant=combo_pulse_type,
         states=[
-            pulse_gaussian,
+            PULSE_GAUSSIAN,
         ],
     ))
 
@@ -959,9 +1139,6 @@ if __name__ == "__main__":
         ))
     #endregion Section: QB spectra
 
-    pulse_cz = 'CZ'
-    pulse_netzero = 'NetZero'
-
     #region Section: 2-QB gates
     f.add_section('2-QB gates')
     #region Group: 2-QB pulses
@@ -970,15 +1147,8 @@ if __name__ == "__main__":
     combo_pulse_type = LCombo(
         'Pulse type, 2QB',
         label='Pulse type',
-        combo=[
-            pulse_gaussian,
-            pulse_square,
-            pulse_ramp,
-            pulse_cz,
-            pulse_cosine,
-            pulse_netzero,
-        ],
-        def_value=pulse_cz,
+        combo=PULSES_1QB + PULSES_2QB,
+        def_value=PULSE_CZ,
     )
     f.add_quantity(combo_pulse_type)
 
@@ -989,7 +1159,7 @@ if __name__ == "__main__":
         def_value=3,
         state_quant=combo_pulse_type,
         states=[
-            pulse_gaussian,
+            PULSE_GAUSSIAN,
         ],
     ))
 
@@ -999,7 +1169,7 @@ if __name__ == "__main__":
         def_value=False,
         state_quant=combo_pulse_type,
         states=[
-            pulse_cosine,
+            PULSE_COSINE,
         ],
     ))
 
@@ -1009,7 +1179,7 @@ if __name__ == "__main__":
         def_value=False,
         state_quant=combo_pulse_type,
         states=[
-            pulse_gaussian,
+            PULSE_GAUSSIAN,
         ],
     ))
 
@@ -1041,7 +1211,6 @@ if __name__ == "__main__":
         show_in_measurement_dlg=True,
     ))
 
-    MAX_FOURIER_TERMS = 4
     fourier_terms = list(range(1,MAX_FOURIER_TERMS+1))
     combo_fourier = LCombo(
         'Fourier terms, 2QB',
@@ -1054,8 +1223,8 @@ if __name__ == "__main__":
         ),
         state_quant=combo_pulse_type,
         states=[
-            pulse_cz,
-            pulse_netzero,
+            PULSE_CZ,
+            PULSE_NETZERO,
         ],
     )
     f.add_quantity(combo_fourier)
@@ -1072,10 +1241,10 @@ if __name__ == "__main__":
             unit='V',
             state_quant=combo_pulse_type,
             states=[
-                pulse_gaussian,
-                pulse_square,
-                pulse_ramp,
-                pulse_cosine,
+                PULSE_GAUSSIAN,
+                PULSE_SQUARE,
+                PULSE_RAMP,
+                PULSE_COSINE,
             ],
             show_in_measurement_dlg=True,
         ))
@@ -1110,8 +1279,8 @@ if __name__ == "__main__":
             ),
             state_quant=combo_pulse_type,
             states=[
-                pulse_cz,
-                pulse_netzero,
+                PULSE_CZ,
+                PULSE_NETZERO,
             ],
         ))
 
@@ -1126,8 +1295,8 @@ if __name__ == "__main__":
             ),
             state_quant=combo_pulse_type,
             states=[
-                pulse_cz,
-                pulse_netzero,
+                PULSE_CZ,
+                PULSE_NETZERO,
             ],
         ))
 
@@ -1142,8 +1311,8 @@ if __name__ == "__main__":
             ),
             state_quant=combo_pulse_type,
             states=[
-                pulse_cz,
-                pulse_netzero,
+                PULSE_CZ,
+                PULSE_NETZERO,
             ],
         ))
 
@@ -1158,8 +1327,8 @@ if __name__ == "__main__":
             ),
             state_quant=combo_pulse_type,
             states=[
-                pulse_cz,
-                pulse_netzero,
+                PULSE_CZ,
+                PULSE_NETZERO,
             ],
         ))
 
@@ -1171,8 +1340,8 @@ if __name__ == "__main__":
             tooltip='Coupling strength between |11> state and |02> state',
             state_quant=combo_pulse_type,
             states=[
-                pulse_cz,
-                pulse_netzero,
+                PULSE_CZ,
+                PULSE_NETZERO,
             ],
         ))
 
@@ -1211,8 +1380,8 @@ if __name__ == "__main__":
             tooltip='Flip the sign of the amplitude of the CZ pulse',
             state_quant=combo_pulse_type,
             states=[
-                pulse_cz,
-                pulse_netzero,
+                PULSE_CZ,
+                PULSE_NETZERO,
             ],
         ))
     #endregion Group: 2-QB pulse #
@@ -1409,7 +1578,6 @@ if __name__ == "__main__":
     #endregion Group: Z Predistortion
 
     #region Group: Z
-    Z_PREDISTORTION_TERMS = 4
     for i in range(-1, MAX_QUBITS):
         if i == -1:
             qubit = ''
@@ -1480,7 +1648,6 @@ if __name__ == "__main__":
         def_value=True,
     ))
 
-    MAX_CT_QUBITS = MAX_QUBITS
     for i in range(MAX_CT_QUBITS):
         f.add_quantity(LCombo(
             f'CT-matrix element #{i+1}',
@@ -1504,13 +1671,8 @@ if __name__ == "__main__":
     combo_pulse_type = LCombo(
         'Readout pulse type',
         label='Pulse type',
-        combo=[
-            pulse_gaussian,
-            pulse_square,
-            pulse_ramp,
-            pulse_cosine,
-        ],
-        def_value=pulse_square,
+        combo=PULSES_1QB,
+        def_value=PULSE_SQUARE,
     )
     f.add_quantity(combo_pulse_type)
 
@@ -1521,7 +1683,7 @@ if __name__ == "__main__":
         def_value=3,
         state_quant=combo_pulse_type,
         states=[
-            pulse_gaussian,
+            PULSE_GAUSSIAN,
         ],
     ))
 
@@ -1531,7 +1693,7 @@ if __name__ == "__main__":
         def_value=False,
         state_quant=combo_pulse_type,
         states=[
-            pulse_cosine,
+            PULSE_COSINE,
         ],
     ))
 
@@ -1541,7 +1703,7 @@ if __name__ == "__main__":
         def_value=False,
         state_quant=combo_pulse_type,
         states=[
-            pulse_gaussian,
+            PULSE_GAUSSIAN,
         ],
     ))
 
@@ -1645,6 +1807,13 @@ if __name__ == "__main__":
     for i in range(MAX_QUBITS):
         qubit = i+1
         f.add_group(f'Qubit #{qubit}')
+
+        f.add_quantity(LBoolean(
+            f'Readout enabled #{qubit}',
+            label='Enabled',
+            def_value=True,
+        ))
+        
         f.add_quantity(LDouble(
             f'Readout amplitude #{qubit}',
             label='Amplitude',

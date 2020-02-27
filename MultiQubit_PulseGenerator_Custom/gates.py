@@ -174,7 +174,7 @@ class ReadoutGate(OneQubitGate):
     """Readouts the qubit state."""
 
 
-class CustomGate(BaseGate):
+class CustomGate(OneQubitGate):
     """A gate using a given :obj:`Pulse`.
 
     Parameters
@@ -184,8 +184,9 @@ class CustomGate(BaseGate):
 
     """
 
-    def __init__(self, pulse):
+    def __init__(self, pulse, line):
         self.pulse = pulse
+        self.line = line
 
 
 class RabiGate(SingleQubitXYRotation):

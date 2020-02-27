@@ -105,24 +105,25 @@ class Pulse:
         y[t < (t0 - self.total_duration() / 2)] = 0
         y[t > (t0 + self.total_duration() / 2)] = 0
 
-        if self.use_drag and self.complex:
+        if self.use_drag:
             beta = self.drag_coefficient / (t[1] - t[0])
             y = y + 1j * beta * np.gradient(y)
             y = y * np.exp(1j * 2 * np.pi * self.drag_detuning *
                            (t - t0 + self.total_duration() / 2))
 
+        # Apply phase and SSB
+        phase = self.phase
+        # single-sideband mixing, get frequency
+        omega = 2 * np.pi * self.frequency
+        # apply SSBM transform
+        data_i = (y.real * np.cos(omega * t - phase) +
+                    -y.imag * np.cos(omega * t - phase + +np.pi / 2))
+        data_q = (y.real * np.sin(omega * t - phase) +
+                    -y.imag * np.sin(omega * t - phase + +np.pi / 2))
         if self.complex:
-            # Apply phase and SSB
-            phase = self.phase
-            # single-sideband mixing, get frequency
-            omega = 2 * np.pi * self.frequency
-            # apply SSBM transform
-            data_i = (y.real * np.cos(omega * t - phase) +
-                      -y.imag * np.cos(omega * t - phase + +np.pi / 2))
-            data_q = (y.real * np.sin(omega * t - phase) +
-                      -y.imag * np.sin(omega * t - phase + +np.pi / 2))
-            y = data_i + 1j * data_q
-        return y
+            return data_i + 1j * data_q
+        else:
+            return data_i
 
 
 class Gaussian(Pulse):
