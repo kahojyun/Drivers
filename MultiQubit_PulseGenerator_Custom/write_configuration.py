@@ -1044,8 +1044,6 @@ if __name__ == "__main__":
         'Extend Z offset to readout',
         label='Extend Z offset to readout',
         def_value=True,
-        state_quant=bool_use_global_Z_offset,
-        states=True,
     )
     f.add_quantity(bool_extend_to_readout)
 
@@ -1067,8 +1065,6 @@ if __name__ == "__main__":
         label='Ring-up time',
         def_value=20e-9,
         unit='s',
-        state_quant=bool_use_global_Z_offset,
-        states=True,
     ))
     #endregion Group: Cosine pulse settings
 
@@ -1084,8 +1080,6 @@ if __name__ == "__main__":
             unit='V',
             low_lim=0,
             high_lim=1.5,
-            state_quant=bool_use_global_Z_offset,
-            states=True,
         ))
     #endregion Group: Z offset amplitudes
     #endregion Section: Global Z offset
@@ -1597,22 +1591,16 @@ if __name__ == "__main__":
             f.add_quantity(LDouble(
                 f'Predistort Z{qubit} - A{j+1}',
                 label=f'A{j+1}',
-                state_quant=bool_from_str,
-                states=False,
             ))
             f.add_quantity(LDouble(
                 f'Predistort Z{qubit} - tau{j+1}',
                 label=f'tau{j+1}',
-                state_quant=bool_from_str,
-                states=False,
             ))
 
         f.add_quantity(LDouble(
             f'Predistort Z{qubit} - tauC',
             label=f'tauC',
             tooltip='Time constant for capacitor.',
-            state_quant=bool_from_str,
-            states=False,
         ))
 
         f.add_quantity(LString(
@@ -1622,8 +1610,6 @@ if __name__ == "__main__":
                 'String representation for `Filter`, eg. Filter(fs=..., A=..., '
                 'B=..., C=...)'
             ),
-            state_quant=bool_from_str,
-            states=True,
         ))
     #endregion Group: Z
     #endregion Section: Predistortion
