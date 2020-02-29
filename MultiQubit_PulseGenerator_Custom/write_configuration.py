@@ -1,5 +1,3 @@
-from driver_config import *
-from pathlib import Path
 MAX_QUBITS = 9
 MAX_GENERIC_PULSE = 10
 MAX_FOURIER_TERMS = 4
@@ -31,6 +29,8 @@ PULSES_2QB = [
 ]
 
 if __name__ == "__main__":
+    from pathlib import Path
+    from driver_config import *
     # General setting
     dir_path = Path(__file__).parent
     f = LDriverDefinition(dir_path/'MultiQubit_PulseGenerator_Custom.ini')
