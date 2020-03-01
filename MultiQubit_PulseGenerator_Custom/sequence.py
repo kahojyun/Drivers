@@ -1481,12 +1481,14 @@ class SequenceToWaveforms:
             self.pulses_readout[n] = pulse
 
         # Delays
+        enable_delay = config.get('Enable individual delay')
         self.wave_xy_delays = np.zeros(self.n_qubit)
         self.wave_z_delays = np.zeros(self.n_qubit)
-        for n in range(self.n_qubit):
-            m = n + 1
-            self.wave_xy_delays[n] = config.get('Qubit %d XY Delay' % m)
-            self.wave_z_delays[n] = config.get('Qubit %d Z Delay' % m)
+        if enable_delay:
+            for n in range(self.n_qubit):
+                m = n + 1
+                self.wave_xy_delays[n] = config.get('Qubit %d XY Delay' % m)
+                self.wave_z_delays[n] = config.get('Qubit %d Z Delay' % m)
 
 
 if __name__ == '__main__':

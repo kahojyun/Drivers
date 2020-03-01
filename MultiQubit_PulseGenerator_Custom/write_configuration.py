@@ -750,6 +750,11 @@ if __name__ == "__main__":
         unit='s',
     ))
 
+    f.add_quantity(LBoolean(
+        'Enable individual delay',
+        def_value=True,
+    ))
+
     for i in range(MAX_QUBITS):
         qubit = i+1
         for trace in ['XY', 'Z']:
