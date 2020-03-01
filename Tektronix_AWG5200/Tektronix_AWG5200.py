@@ -97,6 +97,8 @@ class Driver(VISA_Driver):
         elif quant.name in ('Run'):
             if value:
                 self.awg_run(force=True)
+                # turn on channels again, to avoid issues when switch run mode
+                self.turn_on_in_use()
             else:
                 # stop AWG
                 self.awg_stop(force=True)
@@ -150,8 +152,6 @@ class Driver(VISA_Driver):
         """Rescale and send waveform data to the Tek"""
         self.nPrevData = 0
         self.bIsStopped = False
-        # turn off all output
-        self.sendValueToOther('All output off', True)
         # go through all channels
         for n in range(self.nCh):
             # channels are numbered 1-8
@@ -204,21 +204,19 @@ class Driver(VISA_Driver):
                 self.writeAndLog(f':SLIS:SEQ:STEP{n_seq+1}:GOTO "{filename}",2')
                 # save old sequence length
                 self.nOldSeq = n_seq
-            # Assign sequence to channels
-            for n, bUpdate in enumerate(self.lInUse):
-                if bUpdate:
-                    self.writeAndLog(f':SOUR{n+1}:CASS:SEQ "{filename}",{n+1}')
-            # turn on all output
-            self.sendValueToOther('All output off', False)
+            # turn on channels in use 
+            self.turn_on_in_use(seq=True)
             return
-        # turn on all output
-        self.sendValueToOther('All output off', False)
+        # turn on channels in use 
+        self.turn_on_in_use()
         # if not starting, make sure AWG is not running, then return
         if not bStart:
             self.awg_stop()
             return
         # send command to turn on run mode to tek
         self.awg_run()
+        # turn on channels again, to avoid issues when turning on/off run mode
+        self.turn_on_in_use()
 
 
     def scaleWaveformToReal(self, vData, dVpp, ch):
@@ -242,6 +240,8 @@ class Driver(VISA_Driver):
             name = 'Labber_%d' % channel
         else:
             name = 'Labber_%d_%d' % (channel, seq+1)
+        # first, turn off output
+        self.sendValueToOther(f'Ch{channel} - Output', False)
         if bOnlyClear:
             # just clear this channel
             self.writeAndLog(':SOUR%d:CASS:CLE;' % channel)
@@ -333,6 +333,8 @@ class Driver(VISA_Driver):
                 Mlength = 0
         # stop AWG if still running
         self.awg_stop()
+        # send to tek, start by turning off output
+        self.sendValueToOther(f'Ch{channel} - Output', False)
         if seq is None:
             # non-sequence mode, get name
             name = b'Labber_%d' % channel
@@ -391,6 +393,15 @@ class Driver(VISA_Driver):
         if nTry <= 0:
             # timeout
             raise InstrumentDriver.Error('Cannot turn on Run mode')
+    
+    
+    def turn_on_in_use(self, seq=None):
+        """Turn on output of channels in use"""
+        for n, bUpdate in enumerate(self.lInUse):
+            if bUpdate:
+                self.sendValueToOther(f'Ch{n+1} - Output', True)
+                if seq is not None:
+                    self.writeAndLog(f':SOUR{n+1}:CASS:SEQ "Labber_SEQ",{n+1}')
 
     def write_binary(self, sCmd, data):
         """Write binary data, no log"""
