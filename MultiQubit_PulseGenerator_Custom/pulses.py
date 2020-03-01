@@ -138,7 +138,7 @@ class Gaussian(Pulse):
         self.truncation_range = 5
 
     def total_duration(self):
-        return 2 * self.width + self.plateau
+        return self.width + self.plateau
 
     def calculate_envelope(self, t0, t):
         # width == 2 * truncation_range * std
@@ -176,14 +176,14 @@ class Gaussian(Pulse):
 
 class Ramp(Pulse):
     def total_duration(self):
-        return 2 * self.width + self.plateau
+        return self.width + self.plateau
 
     def calculate_envelope(self, t0, t):
         # rising and falling slopes
-        vRise = ((t - (t0 - self.plateau / 2 - self.width)) / self.width)
+        vRise = ((2*t - (2*t0 - self.plateau - self.width)) / self.width)
         vRise[vRise < 0.0] = 0.0
         vRise[vRise > 1.0] = 1.0
-        vFall = (((t0 + self.plateau / 2 + self.width) - t) / self.width)
+        vFall = (((2*t0 + self.plateau + self.width) - 2*t) / self.width)
         vFall[vFall < 0.0] = 0.0
         vFall[vFall > 1.0] = 1.0
         values = vRise * vFall
