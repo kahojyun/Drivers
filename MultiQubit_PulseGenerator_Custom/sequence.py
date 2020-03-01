@@ -220,15 +220,15 @@ class Sequence:
         if self.perform_state_tomography:
             self._state_tomography.add_pulses(self)
 
-        if self.readout_delay > 0:
-            delay = gates.IdentityGate(width=self.readout_delay)
-            self.add_gate_to_all(delay, dt=0)
+        # if self.readout_delay > 0:
+        #     delay = gates.IdentityGate(width=self.readout_delay)
+        #     self.add_gate_to_all(delay, dt=0)
         qubit = [
             i for i in range(self.n_qubit)
             if config.get(f'Readout enabled #{i+1}')
         ]
         gate = [gates.ReadoutGate()] * len(qubit)
-        self.add_gate(qubit, gate, dt=0, align='left')
+        self.add_gate(qubit, gate, dt=self.readout_delay, align='left')
 
         return self
 
@@ -547,6 +547,12 @@ class SequenceToWaveforms:
         self.gate_overlap = 20E-9
         self.minimal_gate_time = 20E-9
 
+        #readout z shift
+        self.use_readout_z_shift=False
+        self.readout_z_shift_time_before=10e-9
+        self.readout_z_shift_ringup=0.0
+        self.readout_z_shift_amplitude=[0.]*self.n_qubit
+
         #z offset
         self.use_z_offset=False
         self.extend_Z_offset_readout=True
@@ -619,8 +625,12 @@ class SequenceToWaveforms:
             for n in range(1, self.n_qubit):
                 self._wave_xy[n][:] = 0.0
 
+        if self.use_readout_z_shift:
+            self._add_readout_z_shift()
+
         if self.use_z_offset:
             self._add_global_Z_offset()
+
         # log.info('before predistortion, _wave_z max is {}'.format(np.max(self._wave_z)))
         # if self.compensate_crosstalk:
         #     self._perform_crosstalk_compensation()
@@ -878,6 +888,25 @@ class SequenceToWaveforms:
             gate[-1] = 0.0
             # store results
             self._wave_gate[n] = gate
+
+    def _add_readout_z_shift(self):
+        """ Create waveforms for readout Z shift. """
+
+        shift = np.zeros_like(self._wave_z[0])
+        n_before = int(np.round(self.readout_z_shift_time_before * self.sample_rate))
+        start = (np.abs(self.readout_iq) > 0.0).nonzero()[0][0] - n_before
+        end = int(start + self.n_pts_readout)
+        # n_after = int(np.round(self.readout_z_shift_time_after * self.sample_rate))
+        # end = (np.abs(self.readout_iq) > 0.0).nonzero()[0][-1] + n_after
+        shift[start:end] = 1.
+
+        # make sure shift starts/ends in 0
+        shift[0]=0.
+        shift[-1]=0.
+
+        # append shift to Z waveforms
+        for n in range(self.n_qubit):
+            self._wave_z[n]+=(shift*self.readout_z_shift_amplitude[n])
 
     def _add_global_Z_offset(self):
         """ Create waveforms for global Z offset. """
@@ -1284,6 +1313,13 @@ class SequenceToWaveforms:
                 pulse.amplitude = config.get('Amplitude #%d, Z' % m)
 
             self.pulses_1qb_z[n] = pulse
+
+        #readout z shift
+        self.use_readout_z_shift=config.get('Use readout Z shift')
+        self.readout_z_shift_time_before=config.get('Time before readout, readout Z shift')
+        self.readout_z_shift_time_after=config.get('Time after readout, readout Z shift')
+        self.readout_z_shift_ringup=config.get('Ringup, readout Z shift')
+        for n in range(len(self.pulses_1qb_z)): self.readout_z_shift_amplitude[n]=config.get('Amplitude #{:d}, readout Z shift'.format(n+1))
 
         #z offset
         self.use_z_offset=config.get('Use global Z offset')

@@ -91,7 +91,8 @@ class SingleQubitZRotation(OneQubitGate):
     def get_adjusted_pulse(self, pulse):
         pulse = copy(pulse)
         # pi pulse correspond to the full amplitude
-        pulse.amplitude *= self.theta / np.pi
+        # pulse.amplitude *= self.theta / np.pi
+        pulse.plateau *= self.theta / np.pi
         return pulse
 
     def __str__(self):

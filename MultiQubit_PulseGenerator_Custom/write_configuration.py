@@ -36,7 +36,7 @@ if __name__ == "__main__":
     f = LDriverDefinition(dir_path/'MultiQubit_PulseGenerator_Custom.ini')
     f.add_general_settings(
         name='Multi-Qubit Pulse Generator Custom',
-        version='1.4.0',
+        version='1.4.1',
         driver_path='MultiQubit_PulseGenerator_Custom',
         signal_analyzer=True,
         signal_generator=True,
@@ -1036,6 +1036,50 @@ if __name__ == "__main__":
     #endregion Group: Qubit #
     #endregion Section: 1-QB gates Z
     
+    #region Section: Readout Z shift
+    f.add_section('Readout Z shift')
+    #region Group: Readout Z shift
+    f.add_group('Readout Z shift')
+    f.add_quantity(LBoolean(
+        'Use readout Z shift',
+        label='Activate',
+        def_value=False,
+    ))
+
+    for s in ['before', 'after']:
+        f.add_quantity(LDouble(
+            f'Time {s} readout, readout Z shift',
+            label=f'Time {s} readout',
+            unit='s',
+            def_value=10e-9,
+        ))
+    #endregion Group: Readout Z shift
+
+    #region Group: Cosine pulse settings
+    f.add_group('Cosine pulse settings')
+
+    f.add_quantity(LDouble(
+        'Ringup, readout Z shift',
+        label='Ring-up time',
+        def_value=0,
+        unit='s',
+    ))
+    #endregion Group: Cosine pulse settings
+
+    #region Group: readout Z shift amplitude
+    f.add_group('readout Z shift amplitude')
+
+    for i in range(MAX_QUBITS):
+        qubit = i+1
+        f.add_quantity(LDouble(
+            f'Amplitude #{qubit}, readout Z shift',
+            label=f'Amplitude #{qubit}',
+            def_value=0,
+            unit='V',
+        ))
+    #endregion Group: readout Z shift amplitude
+    #endregion Section: Readout Z shift
+    
     #region Section: Global Z offset
     f.add_section('Global Z offset')
     #region Group: Global Z offset
@@ -1086,8 +1130,6 @@ if __name__ == "__main__":
             label=f'Amplitude #{qubit}',
             def_value=0,
             unit='V',
-            low_lim=0,
-            high_lim=1.5,
         ))
     #endregion Group: Z offset amplitudes
     #endregion Section: Global Z offset
