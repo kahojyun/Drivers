@@ -53,6 +53,10 @@ class Pulse:
         self.start_at_zero = False
         self.complex = complex
 
+        # For IQ mixer corrections
+        self.iq_ratio = 1.0
+        self.iq_skew = 0.0
+
     def total_duration(self):
         """Get the total duration for the pulse.
 
@@ -116,10 +120,12 @@ class Pulse:
         # single-sideband mixing, get frequency
         omega = 2 * np.pi * self.frequency
         # apply SSBM transform
-        data_i = (y.real * np.cos(omega * t - phase) +
-                    -y.imag * np.cos(omega * t - phase + +np.pi / 2))
-        data_q = (y.real * np.sin(omega * t - phase) +
-                    -y.imag * np.sin(omega * t - phase + +np.pi / 2))
+        data_i = self.iq_ratio * (y.real * np.cos(omega * t - phase) +
+                                    - y.imag * np.cos(omega * t - phase +
+                                                    np.pi / 2))
+        data_q = (y.real * np.sin(omega * t - phase + self.iq_skew) +
+                    -y.imag * np.sin(omega * t - phase + self.iq_skew +
+                                    np.pi / 2))
         if self.complex:
             return data_i + 1j * data_q
         else:
