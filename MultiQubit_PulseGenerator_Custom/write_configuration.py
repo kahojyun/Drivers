@@ -36,7 +36,7 @@ if __name__ == "__main__":
     f = LDriverDefinition(dir_path/'MultiQubit_PulseGenerator_Custom.ini')
     f.add_general_settings(
         name='Multi-Qubit Pulse Generator Custom',
-        version='1.3.0',
+        version='1.4.0',
         driver_path='MultiQubit_PulseGenerator_Custom',
         signal_analyzer=True,
         signal_generator=True,
@@ -57,6 +57,7 @@ if __name__ == "__main__":
     seq_rtrain = 'Readout training'
     seq_custom = 'Custom'
     seq_gen = 'Generic'
+    seq_2xeb = '2-QB XEB'
     combo_seq = LCombo(
         'Sequence',
         combo=[
@@ -69,6 +70,7 @@ if __name__ == "__main__":
             seq_rtrain,
             seq_custom,
             seq_gen,
+            seq_2xeb,
         ],
         show_in_measurement_dlg=True,
     )
@@ -279,6 +281,7 @@ if __name__ == "__main__":
         states=[
             seq_1qrb,
             seq_2qrb,
+            seq_2xeb,
         ],
         show_in_measurement_dlg=True,
     ))
@@ -294,6 +297,7 @@ if __name__ == "__main__":
         states=[
             seq_1qrb,
             seq_2qrb,
+            seq_2xeb,
         ],
         show_in_measurement_dlg=True,
     ))
@@ -306,6 +310,7 @@ if __name__ == "__main__":
         states=[
             seq_1qrb,
             seq_2qrb,
+            seq_2xeb,
         ],
     ))
 
@@ -317,6 +322,7 @@ if __name__ == "__main__":
         states=[
             seq_1qrb,
             seq_2qrb,
+            seq_2xeb,
         ],
         show_in_measurement_dlg=True,
     )
@@ -348,6 +354,7 @@ if __name__ == "__main__":
         states=[
             seq_1qrb,
             seq_2qrb,
+            seq_2xeb,
         ],
     ))
 
@@ -357,6 +364,7 @@ if __name__ == "__main__":
         state_quant=combo_seq,
         states=[
             seq_2qrb,
+            seq_2xeb,
         ],
         show_in_measurement_dlg=True,
     ))

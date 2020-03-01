@@ -9,6 +9,8 @@ import copy
 import itertools
 
 import gates
+import pulses
+import write_configuration as CONST
 from sequence import Sequence
 
 log = logging.getLogger('LabberDriver')
@@ -1010,6 +1012,171 @@ class TwoQubit_RB(Sequence):
 
 
         return (recovery_seq_1, recovery_seq_2)
+
+
+class TwoQubit_XEB(Sequence):
+    """Two qubit cross entropy benchmarking."""
+
+    prev_randomize = np.inf  # store the previous value
+    prev_N_cliffords = np.inf  # store the previous value
+    prev_sequence = ''
+    prev_gate_seq = []
+
+    def generate_sequence(self, config):
+        """
+        Generate sequence by adding gates/pulses to waveforms.
+
+        Parameters
+        ----------
+        config: dict
+            configuration
+
+        Returns
+        -------
+        """
+
+        # get parameters
+
+        sequence = config['Sequence']
+        qubits_to_benchmark = [int(config['Qubits to Benchmark'][0]) - 1,
+                               int(config['Qubits to Benchmark'][2]) - 1]
+        # Number of Cliffords to generate
+        N_cliffords = int(config['Number of Cliffords'])
+        randomize = config['Randomize']
+        multi_seq = config.get('Output multiple sequences', False)
+        write_seq = config.get('Write sequence as txt file', False)
+        
+        rnd.seed(randomize)
+
+        # generate new randomized clifford gates only if configuration changes
+        if (self.prev_sequence != sequence or
+                self.prev_randomize != randomize or
+                self.prev_N_cliffords != N_cliffords or
+                multi_seq):
+
+            self.prev_randomize = randomize
+            self.prev_N_cliffords = N_cliffords
+            self.prev_sequence = sequence
+
+            multi_gate_seq = []
+
+            # Generate 2QB XEB sequence
+            gateSeq1 = []
+            gateSeq2 = []
+            for j in range(N_cliffords):
+                rndnum = rnd.randint(0, 576) #Only applying single qubit gates
+                # add clifford
+                add_singleQ_based_twoQ_clifford(rndnum, gateSeq1, gateSeq2)
+                # insert generic sequence
+                gateSeq1.append('Generic')
+                gateSeq2.append('Generic')
+
+
+
+            # remove redundant Identity gates
+            gateSeq1, gateSeq2 = zip(*((g1, g2)
+                for (g1, g2) in zip(gateSeq1, gateSeq2)
+                if g1 != gates.I or g2 != gates.I
+            ))
+            
+
+            # write sequence
+            if write_seq == True:
+                import os
+                from datetime import datetime
+                directory = os.path.join(path_currentdir,'2QB_XEBseq')
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                filename = datetime.now().strftime('%Y-%m-%d %H-%M-%S') + '_N_cliffords=%d_seed=%d.txt'%(N_cliffords,randomize)
+                filepath = os.path.join(directory,filename)
+                log.info('make file: ' + filepath)
+                with open(filepath, "w") as text_file:
+                    print('New Sequence', file=text_file)
+                    for i, (g1, g2) in enumerate(zip(gateSeq1, gateSeq2)):
+                        s1 = g1 if isinstance(g1, str) else cliffords.Gate_to_strGate(g1)
+                        s2 = g2 if isinstance(g2, str) else cliffords.Gate_to_strGate(g2)
+                        print(f'Index: {i}, Gate: [{s1}, {s2}]', file=text_file)
+
+            # transpose list of lists
+            multi_gate_seq = list(map(list, itertools.zip_longest(gateSeq1, gateSeq2, fillvalue=gates.I))) # Not to chop
+            self.prev_gate_seq = multi_gate_seq
+
+        
+        # prepare generic sequence
+        pulse_n = int(config['Generic - Pulse number'])
+        # calculate sequence duration
+        t_start = 0
+        min_t_start = np.inf
+        max_t_end = -np.inf
+        lqubit = []
+        lpulse = []
+        lline = []
+        ldt = []
+        for i in range(pulse_n):
+            qubit = int(config[f'Generic - Add to qubit #{i+1}'])-1
+            line = config[f'Generic - Add to line #{i+1}']
+
+            t0 = None
+            dt = None
+            timing = config[f'Generic - Pulse timing #{i+1}']
+            if timing == CONST.TIMING_ABS:
+                t0 = config[f'Generic - Pulse absolute time #{i+1}']
+            elif timing == CONST.TIMING_REL:
+                dt = config[f'Generic - Pulse relative time #{i+1}']
+
+            # Construct pulse
+            pulse_type = config[f'Generic - Pulse type #{i+1}']
+            if line == 'XY':
+                pulse = getattr(pulses, pulse_type)(complex=True)
+                pulse.use_drag = config[f'Generic - Use DRAG #{i+1}']
+                if pulse.use_drag:
+                    pulse.drag_coefficient = config[f'Generic - DRAG scaling #{i+1}']
+                    pulse.drag_detuning = config[f'Generic - DRAG frequency detuning #{i+1}']
+            else: # line == 'Z'
+                pulse = getattr(pulses, pulse_type)(complex=False)
+            pulse.amplitude = config[f'Generic - Amplitude #{i+1}']
+            pulse.width = config[f'Generic - Width #{i+1}']
+            pulse.plateau = config[f'Generic - Plateau #{i+1}']
+            pulse.frequency = config[f'Generic - Frequency #{i+1}']
+            pulse.phase = config[f'Generic - Phase #{i+1}'] * np.pi / 180
+            pulse.start_at_zero = config.get(f'Generic - Start at zero #{i+1}')
+            if pulse_type == CONST.PULSE_GAUSSIAN:
+                pulse.truncation_range = config[f'Generic - Truncation range #{i+1}']
+            elif pulse_type == CONST.PULSE_COSINE:
+                pulse.half_cosine = config[f'Generic - Half cosine #{i+1}']
+
+            # calculate relative spacing dt
+            if dt is None and t0 is None:
+                # Use global pulse spacing
+                dt = config.get('Pulse spacing')
+            duration = pulse.total_duration()
+            if dt is None:
+                dt = t0 - duration / 2 - t_start
+            # Shift pulse if minimum pulse start time < 0
+            min_t_start = min(min_t_start, t_start+dt)
+            # Avoid double spacing for steps with 0 duration
+            if duration != 0:
+                t_start = t_start + dt + duration
+            max_t_end = max(max_t_end, t_start)
+            lqubit.append(qubit)
+            lpulse.append(pulse)
+            lline.append(line)
+            ldt.append(dt)
+        dt_before = -min_t_start
+        dt_after = max_t_end - t_start
+
+        dt = config.get('Pulse spacing')
+        extra_dt = 0
+        for gate_seq in self.prev_gate_seq:
+            if gate_seq[0] == 'Generic':
+                extra_dt += dt + dt_before
+                for i in range(pulse_n):
+                    self.add_single_pulse(lqubit[i], lpulse[i], lline[i], dt=ldt[i]+extra_dt)
+                    extra_dt = 0
+                extra_dt = dt_after
+            else:
+                self.add_gate(qubit=qubits_to_benchmark, gate=gate_seq, dt=dt+extra_dt)
+                extra_dt = 0
 
 
 if __name__ == '__main__':
