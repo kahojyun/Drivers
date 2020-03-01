@@ -274,7 +274,7 @@ if __name__ == "__main__":
     ))
 
     f.add_quantity(LDouble(
-        'Number of Cliffords',
+        'Number of cycles',
         def_value=17,
         low_lim=0,
         state_quant=combo_seq,
@@ -291,7 +291,7 @@ if __name__ == "__main__":
         def_value=0,
         tooltip=(
             'Randomize gate sequence only if "Randomize" value changes or '
-            '"Number of Cliffords" changes'
+            '"Number of cycles" changes'
         ),
         state_quant=combo_seq,
         states=[

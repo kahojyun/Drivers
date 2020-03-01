@@ -231,6 +231,11 @@ def add_singleQ_S1_Z2p(index, gate_seq):
         gate_seq.append(gates.Ym)
         gate_seq.append(gates.I)  # auxiliary
 
+def add_singleQ_p2(gate_seq):
+    """Add single-qubit pi/2 gate."""
+    gate_set = [gates.X2p, gates.Y2p, gates.X2m, gates.Y2m]
+    gate_seq.append(rnd.choice(gate_set))
+
 def add_singleQ_based_twoQ_clifford(index, gate_seq_1, gate_seq_2, **kwargs):
     """Add single-qubit-gates-only-based two Qubit Clifford.
 
@@ -392,7 +397,7 @@ class SingleQubit_RB(Sequence):
     """Single qubit randomized benchmarking."""
 
     prev_randomize = np.inf  # store the previous value
-    prev_N_cliffords = np.inf  # store the previous value
+    prev_N_cycles = np.inf  # store the previous value
     prev_interleave = np.inf  # store the previous value
     prev_interleaved_gate = np.inf  # store the previous value
     prev_sequence = ''
@@ -402,8 +407,8 @@ class SingleQubit_RB(Sequence):
         """Generate sequence by adding gates/pulses to waveforms."""
         # get parameters
         sequence = config['Sequence']
-        # Number of Cliffords to generate
-        N_cliffords = int(config['Number of Cliffords'])
+        # Number of cycles to generate
+        N_cycles = int(config['Number of cycles'])
         randomize = config['Randomize']
         interleave = config['Interleave 1-QB Gate']
         multi_seq = config.get('Output multiple sequences', False)
@@ -418,14 +423,14 @@ class SingleQubit_RB(Sequence):
         # generate new randomized clifford gates only if configuration changes
         if (self.prev_sequence != sequence or
                 self.prev_randomize != randomize or
-                self.prev_N_cliffords != N_cliffords or
+                self.prev_N_cycles != N_cycles or
                 self.prev_interleave != interleave or
                 multi_seq or
                 self.prev_interleaved_gate != interleaved_gate or
                 self.prev_n_qubit != self.n_qubit):
 
             self.prev_randomize = randomize
-            self.prev_N_cliffords = N_cliffords
+            self.prev_N_cycles = N_cycles
             self.prev_interleave = interleave
             self.prev_sequence = sequence
             self.prev_n_qubit = self.n_qubit
@@ -435,7 +440,7 @@ class SingleQubit_RB(Sequence):
                 # Generate 1QB RB sequence
                 single_gate_seq = []
 
-                for i in range(N_cliffords):
+                for i in range(N_cycles):
                     rndnum = rnd.randint(0, 23)
                     log.info('Random number %d' %(rndnum))
                     add_singleQ_clifford(rndnum, single_gate_seq,
@@ -459,7 +464,7 @@ class SingleQubit_RB(Sequence):
                     directory = os.path.join(path_currentdir,'1QB_RBseq')
                     if not os.path.exists(directory):
                         os.makedirs(directory)
-                    filename = datetime.now().strftime('%Y-%m-%d %H-%M-%S-f')[:-3] + '_qbNum=%d_N_cliffords=%d_seed=%d.txt'%(n, N_cliffords,randomize)
+                    filename = datetime.now().strftime('%Y-%m-%d %H-%M-%S-f')[:-3] + '_qbNum=%d_N_cycles=%d_seed=%d.txt'%(n, N_cycles,randomize)
                     filepath = os.path.join(directory,filename)
                     log.info('make file: ' + filepath)
                     with open(filepath, "w") as text_file:
@@ -582,7 +587,7 @@ class TwoQubit_RB(Sequence):
     """Two qubit randomized benchmarking."""
 
     prev_randomize = np.inf  # store the previous value
-    prev_N_cliffords = np.inf  # store the previous value
+    prev_N_cycles = np.inf  # store the previous value
     prev_interleave = np.inf  # store the previous value
     prev_interleaved_gate = np.inf  # store the previous value
     prev_sequence = ''
@@ -613,8 +618,8 @@ class TwoQubit_RB(Sequence):
         sequence = config['Sequence']
         qubits_to_benchmark = [int(config['Qubits to Benchmark'][0]) - 1,
                                int(config['Qubits to Benchmark'][2]) - 1]
-        # Number of Cliffords to generate
-        N_cliffords = int(config['Number of Cliffords'])
+        # Number of cycles to generate
+        N_cycles = int(config['Number of cycles'])
         randomize = config['Randomize']
         interleave = config['Interleave 2-QB Gate']
         multi_seq = config.get('Output multiple sequences', False)
@@ -630,14 +635,14 @@ class TwoQubit_RB(Sequence):
         # generate new randomized clifford gates only if configuration changes
         if (self.prev_sequence != sequence or
                 self.prev_randomize != randomize or
-                self.prev_N_cliffords != N_cliffords or
+                self.prev_N_cycles != N_cycles or
                 self.prev_interleave != interleave or
                 multi_seq or
                 self.prev_interleaved_gate != interleaved_gate or
                 self.generator != generator):
 
             self.prev_randomize = randomize
-            self.prev_N_cliffords = N_cliffords
+            self.prev_N_cycles = N_cycles
             self.prev_interleave = interleave
             self.prev_sequence = sequence
             self.generator = generator
@@ -647,7 +652,7 @@ class TwoQubit_RB(Sequence):
             # Generate 2QB RB sequence
             cliffordSeq1 = []
             cliffordSeq2 = []
-            for j in range(N_cliffords):
+            for j in range(N_cycles):
                 log.info('Seed number: %d'%(randomize))
                 rndnum = rnd.randint(0, 11519)
                 # rndnum = rnd.randint(0, 576) #Only applying single qubit gates
@@ -722,8 +727,8 @@ class TwoQubit_RB(Sequence):
                 directory = os.path.join(path_currentdir,'2QB_RBseq')
                 if not os.path.exists(directory):
                     os.makedirs(directory)
-                filename = datetime.now().strftime('%Y-%m-%d %H-%M-%S-f')[:-3] + '_N_cliffords=%d_seed=%d.txt'%(N_cliffords,randomize)
-                # filename = datetime.now().strftime('%Y-%m-%d %H-%M-%S-%f')[:-3] + '_N_cliffords=%d_seed=%d.txt'%(N_cliffords,randomize)
+                filename = datetime.now().strftime('%Y-%m-%d %H-%M-%S-f')[:-3] + '_N_cycles=%d_seed=%d.txt'%(N_cycles,randomize)
+                # filename = datetime.now().strftime('%Y-%m-%d %H-%M-%S-%f')[:-3] + '_N_cycles=%d_seed=%d.txt'%(N_cycles,randomize)
                 filepath = os.path.join(directory,filename)
                 log.info('make file: ' + filepath)
                 with open(filepath, "w") as text_file:
@@ -1018,7 +1023,7 @@ class TwoQubit_XEB(Sequence):
     """Two qubit cross entropy benchmarking."""
 
     prev_randomize = np.inf  # store the previous value
-    prev_N_cliffords = np.inf  # store the previous value
+    prev_N_cycles = np.inf  # store the previous value
     prev_sequence = ''
     prev_gate_seq = []
 
@@ -1040,8 +1045,8 @@ class TwoQubit_XEB(Sequence):
         sequence = config['Sequence']
         qubits_to_benchmark = [int(config['Qubits to Benchmark'][0]) - 1,
                                int(config['Qubits to Benchmark'][2]) - 1]
-        # Number of Cliffords to generate
-        N_cliffords = int(config['Number of Cliffords'])
+        # Number of cycles to generate
+        N_cycles = int(config['Number of cycles'])
         randomize = config['Randomize']
         multi_seq = config.get('Output multiple sequences', False)
         write_seq = config.get('Write sequence as txt file', False)
@@ -1051,11 +1056,11 @@ class TwoQubit_XEB(Sequence):
         # generate new randomized clifford gates only if configuration changes
         if (self.prev_sequence != sequence or
                 self.prev_randomize != randomize or
-                self.prev_N_cliffords != N_cliffords or
+                self.prev_N_cycles != N_cycles or
                 multi_seq):
 
             self.prev_randomize = randomize
-            self.prev_N_cliffords = N_cliffords
+            self.prev_N_cycles = N_cycles
             self.prev_sequence = sequence
 
             multi_gate_seq = []
@@ -1063,10 +1068,9 @@ class TwoQubit_XEB(Sequence):
             # Generate 2QB XEB sequence
             gateSeq1 = []
             gateSeq2 = []
-            for j in range(N_cliffords):
-                rndnum = rnd.randint(0, 576) #Only applying single qubit gates
-                # add clifford
-                add_singleQ_based_twoQ_clifford(rndnum, gateSeq1, gateSeq2)
+            for _ in range(N_cycles):
+                add_singleQ_p2(gateSeq1)
+                add_singleQ_p2(gateSeq2)
                 # insert generic sequence
                 gateSeq1.append('Generic')
                 gateSeq2.append('Generic')
@@ -1087,7 +1091,7 @@ class TwoQubit_XEB(Sequence):
                 directory = os.path.join(path_currentdir,'2QB_XEBseq')
                 if not os.path.exists(directory):
                     os.makedirs(directory)
-                filename = datetime.now().strftime('%Y-%m-%d %H-%M-%S') + '_N_cliffords=%d_seed=%d.txt'%(N_cliffords,randomize)
+                filename = datetime.now().strftime('%Y-%m-%d %H-%M-%S') + '_N_cycles=%d_seed=%d.txt'%(N_cycles,randomize)
                 filepath = os.path.join(directory,filename)
                 log.info('make file: ' + filepath)
                 with open(filepath, "w") as text_file:
