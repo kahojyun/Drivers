@@ -1116,17 +1116,10 @@ class TwoQubit_XEB(Sequence):
         lpulse = []
         lline = []
         ldt = []
+        prev_duration = 0
         for i in range(pulse_n):
             qubit = int(config[f'Generic - Add to qubit #{i+1}'])-1
             line = config[f'Generic - Add to line #{i+1}']
-
-            t0 = None
-            dt = None
-            timing = config[f'Generic - Pulse timing #{i+1}']
-            if timing == CONST.TIMING_ABS:
-                t0 = config[f'Generic - Pulse absolute time #{i+1}']
-            elif timing == CONST.TIMING_REL:
-                dt = config[f'Generic - Pulse relative time #{i+1}']
 
             # Construct pulse
             pulse_type = config[f'Generic - Pulse type #{i+1}']
@@ -1149,11 +1142,36 @@ class TwoQubit_XEB(Sequence):
             elif pulse_type == CONST.PULSE_COSINE:
                 pulse.half_cosine = config[f'Generic - Half cosine #{i+1}']
 
+            # Pulse timing
+            t0 = None
+            dt = None
+            timing = config[f'Generic - Pulse timing #{i+1}']
+            duration = pulse.total_duration()
+            if timing == CONST.TIMING_ABS:
+                this_ref = config[f'Generic - Pulse timing locate #{i+1}']
+                t0 = config[f'Generic - Pulse timing time #{i+1}']
+                if this_ref == 'Start':
+                    t0 += duration / 2
+                elif this_ref == 'End':
+                    t0 -= duration / 2
+            elif timing == CONST.TIMING_REL:
+                dt = config[f'Generic - Pulse timing time #{i+1}']
+                prev_ref = config[f'Generic - Pulse timing reference #{i+1}']
+                if prev_ref == 'Start':
+                    dt -= prev_duration
+                elif prev_ref == 'Center':
+                    dt -= prev_duration / 2
+                this_ref = config[f'Generic - Pulse timing locate #{i+1}']
+                if this_ref == 'Center':
+                    dt -= duration / 2
+                elif this_ref == 'End':
+                    dt -= duration
+            prev_duration = duration
+
             # calculate relative spacing dt
             if dt is None and t0 is None:
                 # Use global pulse spacing
                 dt = config.get('Pulse spacing')
-            duration = pulse.total_duration()
             if dt is None:
                 dt = t0 - duration / 2 - t_start
             # Shift pulse if minimum pulse start time < 0

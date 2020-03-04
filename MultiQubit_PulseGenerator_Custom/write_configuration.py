@@ -5,9 +5,9 @@ MAX_CT_QUBITS = MAX_QUBITS
 Z_PREDISTORTION_TERMS = 4
 
 # pulse timing options
-TIMING_NONE = 'Default spacing'
+TIMING_NONE = 'Default'
 TIMING_ABS = 'Absolute'
-TIMING_REL = 'Relative to previous pulse'
+TIMING_REL = 'Relative'
 
 # pulse types
 PULSE_GAUSSIAN = 'Gaussian'
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     f = LDriverDefinition(dir_path/'MultiQubit_PulseGenerator_Custom.ini')
     f.add_general_settings(
         name='Multi-Qubit Pulse Generator Custom',
-        version='1.4.1',
+        version='1.5.0',
         driver_path='MultiQubit_PulseGenerator_Custom',
         signal_analyzer=True,
         signal_generator=True,
@@ -576,26 +576,44 @@ if __name__ == "__main__":
         )
         f.add_quantity(combo_step_timing)
 
+        f.add_quantity(LCombo(
+            f'Generic - Pulse timing reference #{i+1}',
+            label="Relative to previous pulse's",
+            combo=[
+                'Start',
+                'Center',
+                'End',
+            ],
+            state_quant=combo_step_timing,
+            states=[
+                TIMING_REL,
+            ],
+        ))
+
+        f.add_quantity(LCombo(
+            f'Generic - Pulse timing locate #{i+1}',
+            label="Set this pulse's",
+            combo=[
+                'Start',
+                'Center',
+                'End',
+            ],
+            state_quant=combo_step_timing,
+            states=[
+                TIMING_ABS,
+                TIMING_REL,
+            ],
+        ))
+
         f.add_quantity(LDouble(
-            f'Generic - Pulse absolute time #{i+1}',
-            label='Absolute time',
-            tooltip='Absolute time of the pulse center',
+            f'Generic - Pulse timing time #{i+1}',
+            label='Time',
+            tooltip='Absolute or relative time',
             def_value=100e-9,
             unit='s',
             state_quant=combo_step_timing,
             states=[
                 TIMING_ABS,
-            ],
-        ))
-
-        f.add_quantity(LDouble(
-            f'Generic - Pulse relative time #{i+1}',
-            label='Relative time',
-            tooltip='Spacing to previous pulse',
-            def_value=100e-9,
-            unit='s',
-            state_quant=combo_step_timing,
-            states=[
                 TIMING_REL,
             ],
         ))
