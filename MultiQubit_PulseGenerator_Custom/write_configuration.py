@@ -1,5 +1,7 @@
 MAX_QUBITS = 9
-MAX_GENERIC_PULSE = 10
+MAX_GENERIC_PULSE = 7
+MAX_GENERIC_PRE = 3
+MAX_GENERIC_POST = 3
 MAX_FOURIER_TERMS = 4
 MAX_CT_QUBITS = MAX_QUBITS
 Z_PREDISTORTION_TERMS = 4
@@ -36,7 +38,7 @@ if __name__ == "__main__":
     f = LDriverDefinition(dir_path/'MultiQubit_PulseGenerator_Custom.ini')
     f.add_general_settings(
         name='Multi-Qubit Pulse Generator Custom',
-        version='1.5.0',
+        version='1.5.1',
         driver_path='MultiQubit_PulseGenerator_Custom',
         signal_analyzer=True,
         signal_generator=True,
@@ -537,26 +539,88 @@ if __name__ == "__main__":
 
     #region Section: Generic sequence
     f.add_section('Generic sequence')
-
     f.add_group('Generic sequence')
+
+    f.add_quantity(LDouble(
+        'Generic - Number of cycles',
+        label='Number of cycles',
+        def_value=1,
+        low_lim=1,
+    ))
+
     f.add_quantity(LCombo(
-        'Generic - Pulse number',
-        label='number of pulses',
+        'Generic - Number of pulses',
+        label='Number of cycled pulses',
         combo=list(range(1, MAX_GENERIC_PULSE+1)),
     ))
 
-    #region Group: Pulse
-    for i in range(MAX_GENERIC_PULSE):
-        f.add_group(f'Pulse #{i+1}')
+    f.add_quantity(LCombo(
+        'Generic - Number of pre-pulse',
+        label='Number of pre-pulse',
+        def_value=0,
+        combo=list(range(0, MAX_GENERIC_PRE+1)),
+    ))
+
+    f.add_quantity(LCombo(
+        'Generic - Number of post-pulse',
+        label='Number of post-pulse',
+        def_value=0,
+        combo=list(range(0, MAX_GENERIC_POST+1)),
+    ))
+
+    f.add_quantity(LCombo(
+        'Generic - Pre-cycle spacing type',
+        label='Pre-cycle spacing type',
+        combo=['Start-Start', 'End-Start'],
+    ))
+    
+    f.add_quantity(LDouble(
+        'Generic - Pre-cycle spacing',
+        label='Pre-cycle spacing',
+        tooltip='Time between end of pre-pulse and first cycled pulse',
+        def_value=100e-9,
+        unit='s',
+    ))
+
+    f.add_quantity(LCombo(
+        'Generic - Cycle spacing type',
+        label='Cycle spacing type',
+        combo=['Start-Start', 'End-Start'],
+    ))
+
+    f.add_quantity(LDouble(
+        'Generic - Cycle spacing',
+        label='Cycle spacing',
+        tooltip='Time between cycled pulse sequence',
+        def_value=100e-9,
+        unit='s',
+    ))
+
+    f.add_quantity(LCombo(
+        'Generic - Post-cycle spacing type',
+        label='Post-cycle spacing type',
+        combo=['Start-Start', 'End-Start'],
+    ))
+
+    f.add_quantity(LDouble(
+        'Generic - Post-cycle spacing',
+        label='Post-cycle spacing',
+        tooltip='Time between end of last cycled pulse and post-pulse',
+        def_value=100e-9,
+        unit='s',
+    ))
+
+    def write_custom_pulse(section, group):
+        f.add_group(group)
 
         f.add_quantity(LCombo(
-            f'Generic - Add to qubit #{i+1}',
+            f'{section} - {group} - Add to qubit',
             label='Add to qubit',
             combo=qubit_list,
         ))
 
         combo_line = LCombo(
-            f'Generic - Add to line #{i+1}',
+            f'{section} - {group} - Add to line',
             label='Add to line',
             combo=[
                 'XY',
@@ -566,7 +630,7 @@ if __name__ == "__main__":
         f.add_quantity(combo_line)
         
         combo_step_timing = LCombo(
-            f'Generic - Pulse timing #{i+1}',
+            f'{section} - {group} - Pulse timing',
             label='Pulse timing',
             combo=[
                 TIMING_NONE,
@@ -577,7 +641,7 @@ if __name__ == "__main__":
         f.add_quantity(combo_step_timing)
 
         f.add_quantity(LCombo(
-            f'Generic - Pulse timing reference #{i+1}',
+            f'{section} - {group} - Pulse timing reference',
             label="Relative to previous pulse's",
             combo=[
                 'Start',
@@ -591,7 +655,7 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LCombo(
-            f'Generic - Pulse timing locate #{i+1}',
+            f'{section} - {group} - Pulse timing locate',
             label="Set this pulse's",
             combo=[
                 'Start',
@@ -606,7 +670,7 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LDouble(
-            f'Generic - Pulse timing time #{i+1}',
+            f'{section} - {group} - Pulse timing time',
             label='Time',
             tooltip='Absolute or relative time',
             def_value=100e-9,
@@ -619,14 +683,14 @@ if __name__ == "__main__":
         ))
 
         combo_pulse_type = LCombo(
-            f'Generic - Pulse type #{i+1}',
+            f'{section} - {group} - Pulse type',
             label='Pulse type',
             combo=PULSES_1QB,
         )
         f.add_quantity(combo_pulse_type)
 
         f.add_quantity(LDouble(
-            f'Generic - Truncation range #{i+1}',
+            f'{section} - {group} - Truncation range',
             label='Truncation range',
             tooltip='Truncate at ? σ',
             def_value=3,
@@ -637,7 +701,7 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LBoolean(
-            f'Generic - Half cosine #{i+1}',
+            f'{section} - {group} - Half cosine',
             label='Half cosine',
             def_value=False,
             state_quant=combo_pulse_type,
@@ -647,7 +711,7 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LBoolean(
-            f'Generic - Start at zero #{i+1}',
+            f'{section} - {group} - Start at zero',
             label='Start at zero',
             def_value=False,
             state_quant=combo_pulse_type,
@@ -657,7 +721,7 @@ if __name__ == "__main__":
         ))
 
         bool_use_drag = LBoolean(
-            f'Generic - Use DRAG #{i+1}',
+            f'{section} - {group} - Use DRAG',
             label='Use DRAG',
             def_value=False,
             state_quant=combo_line,
@@ -668,21 +732,21 @@ if __name__ == "__main__":
         f.add_quantity(bool_use_drag)
 
         f.add_quantity(LDouble(
-            f'Generic - Amplitude #{i+1}',
+            f'{section} - {group} - Amplitude',
             label='Amplitude',
             def_value=1,
             unit='V',
         ))
 
         f.add_quantity(LDouble(
-            f'Generic - Phase #{i+1}',
+            f'{section} - {group} - Phase',
             label='Phase',
             def_value=0,
             unit='deg',
         ))
 
         f.add_quantity(LDouble(
-            f'Generic - Width #{i+1}',
+            f'{section} - {group} - Width',
             label='Width',
             def_value=10e-9,
             low_lim=0,
@@ -690,7 +754,7 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LDouble(
-            f'Generic - Plateau #{i+1}',
+            f'{section} - {group} - Plateau',
             label='Plateau',
             def_value=0,
             low_lim=0,
@@ -698,13 +762,13 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LDouble(
-            f'Generic - Frequency #{i+1}',
+            f'{section} - {group} - Frequency',
             label='Frequency',
             unit='Hz',
         ))
 
         f.add_quantity(LDouble(
-            f'Generic - DRAG scaling #{i+1}',
+            f'{section} - {group} - DRAG scaling',
             label='DRAG scaling',
             def_value=0.25e-9,
             unit='s',
@@ -713,14 +777,29 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LDouble(
-            f'Generic - DRAG frequency detuning #{i+1}',
+            f'{section} - {group} - DRAG frequency detuning',
             label='DRAG frequency detuning',
             def_value=0,
             unit='Hz',
             state_quant=bool_use_drag,
             states=True,
         ))
-    #endregion Group: Step
+
+
+    #region Group: Cycled pulse
+    for i in range(MAX_GENERIC_PULSE):
+        write_custom_pulse('Generic', f'Cycled pulse #{i+1}')
+    #endregion Group: Cycled pulse
+
+    #region Group: Pre pulse
+    for i in range(MAX_GENERIC_PRE):
+        write_custom_pulse('Generic', f'Pre pulse #{i+1}')
+    #endregion Group: Pre pulse
+
+    #region Group: Post pulse
+    for i in range(MAX_GENERIC_POST):
+        write_custom_pulse('Generic', f'Post pulse #{i+1}')
+    #endregion Group: Post pulse
     #endregion Section: Generic sequence
 
     #region Section: Waveform

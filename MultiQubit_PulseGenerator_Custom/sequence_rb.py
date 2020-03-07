@@ -1107,7 +1107,7 @@ class TwoQubit_XEB(Sequence):
 
         
         # prepare generic sequence
-        pulse_n = int(config['Generic - Pulse number'])
+        pulse_n = int(config['Generic - Number of pulses'])
         # calculate sequence duration
         t_start = 0
         min_t_start = np.inf
