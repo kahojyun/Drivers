@@ -12,6 +12,7 @@ import gates
 import pulses
 import write_configuration as CONST
 from sequence import Sequence
+from sequence_builtin import get_custom_sequence
 
 log = logging.getLogger('LabberDriver')
 import os
@@ -1027,6 +1028,19 @@ class TwoQubit_XEB(Sequence):
     prev_sequence = ''
     prev_gate_seq = []
 
+    def add_custom_sequence(self, extra_dt, seq):
+        lqubit = seq['lqubit']
+        lpulse = seq['lpulse']
+        lline = seq['lline']
+        ldt = seq['ldt']
+        dt_before = seq['dt_before']
+        dt_after = seq['dt_after']
+        extra_dt += dt_before
+        for i in range(len(lpulse)):
+            self.add_single_pulse(lqubit[i], lpulse[i], lline[i], dt=ldt[i]+extra_dt)
+            extra_dt = 0
+        return dt_after
+
     def generate_sequence(self, config):
         """
         Generate sequence by adding gates/pulses to waveforms.
@@ -1108,98 +1122,19 @@ class TwoQubit_XEB(Sequence):
         
         # prepare generic sequence
         pulse_n = int(config['Generic - Number of pulses'])
-        # calculate sequence duration
-        t_start = 0
-        min_t_start = np.inf
-        max_t_end = -np.inf
-        lqubit = []
-        lpulse = []
-        lline = []
-        ldt = []
-        prev_duration = 0
-        for i in range(pulse_n):
-            qubit = int(config[f'Generic - Add to qubit #{i+1}'])-1
-            line = config[f'Generic - Add to line #{i+1}']
-
-            # Construct pulse
-            pulse_type = config[f'Generic - Pulse type #{i+1}']
-            if line == 'XY':
-                pulse = getattr(pulses, pulse_type)(complex=True)
-                pulse.use_drag = config[f'Generic - Use DRAG #{i+1}']
-                if pulse.use_drag:
-                    pulse.drag_coefficient = config[f'Generic - DRAG scaling #{i+1}']
-                    pulse.drag_detuning = config[f'Generic - DRAG frequency detuning #{i+1}']
-            else: # line == 'Z'
-                pulse = getattr(pulses, pulse_type)(complex=False)
-            pulse.amplitude = config[f'Generic - Amplitude #{i+1}']
-            pulse.width = config[f'Generic - Width #{i+1}']
-            pulse.plateau = config[f'Generic - Plateau #{i+1}']
-            pulse.frequency = config[f'Generic - Frequency #{i+1}']
-            pulse.phase = config[f'Generic - Phase #{i+1}'] * np.pi / 180
-            pulse.start_at_zero = config.get(f'Generic - Start at zero #{i+1}')
-            if pulse_type == CONST.PULSE_GAUSSIAN:
-                pulse.truncation_range = config[f'Generic - Truncation range #{i+1}']
-            elif pulse_type == CONST.PULSE_COSINE:
-                pulse.half_cosine = config[f'Generic - Half cosine #{i+1}']
-
-            # Pulse timing
-            t0 = None
-            dt = None
-            timing = config[f'Generic - Pulse timing #{i+1}']
-            duration = pulse.total_duration()
-            if timing == CONST.TIMING_ABS:
-                this_ref = config[f'Generic - Pulse timing locate #{i+1}']
-                t0 = config[f'Generic - Pulse timing time #{i+1}']
-                if this_ref == 'Start':
-                    t0 += duration / 2
-                elif this_ref == 'End':
-                    t0 -= duration / 2
-            elif timing == CONST.TIMING_REL:
-                dt = config[f'Generic - Pulse timing time #{i+1}']
-                prev_ref = config[f'Generic - Pulse timing reference #{i+1}']
-                if prev_ref == 'Start':
-                    dt -= prev_duration
-                elif prev_ref == 'Center':
-                    dt -= prev_duration / 2
-                this_ref = config[f'Generic - Pulse timing locate #{i+1}']
-                if this_ref == 'Center':
-                    dt -= duration / 2
-                elif this_ref == 'End':
-                    dt -= duration
-            prev_duration = duration
-
-            # calculate relative spacing dt
-            if dt is None and t0 is None:
-                # Use global pulse spacing
-                dt = config.get('Pulse spacing')
-            if dt is None:
-                dt = t0 - duration / 2 - t_start
-            # Shift pulse if minimum pulse start time < 0
-            min_t_start = min(min_t_start, t_start+dt)
-            # Avoid double spacing for steps with 0 duration
-            if duration != 0:
-                t_start = t_start + dt + duration
-            max_t_end = max(max_t_end, t_start)
-            lqubit.append(qubit)
-            lpulse.append(pulse)
-            lline.append(line)
-            ldt.append(dt)
-        dt_before = -min_t_start
-        dt_after = max_t_end - t_start
+        section = 'Generic'
+        cycled_seq = get_custom_sequence(section, [f'Cycled pulse #{i+1}' for i in range(pulse_n)], config)
 
         dt = config.get('Pulse spacing')
         extra_dt = 0
         for gate_seq in self.prev_gate_seq:
             if gate_seq[0] == 'Generic':
-                extra_dt += dt + dt_before
-                for i in range(pulse_n):
-                    self.add_single_pulse(lqubit[i], lpulse[i], lline[i], dt=ldt[i]+extra_dt)
-                    extra_dt = 0
-                extra_dt = dt_after
+                extra_dt += dt
+                extra_dt = self.add_custom_sequence(extra_dt, cycled_seq)
             else:
                 self.add_gate(qubit=qubits_to_benchmark, gate=gate_seq, dt=dt+extra_dt)
                 extra_dt = 0
-
+        self.add_gate_to_all(gates.I, dt=extra_dt)
 
 if __name__ == '__main__':
     pass
