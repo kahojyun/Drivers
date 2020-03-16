@@ -409,7 +409,7 @@ class SingleQubit_RB(Sequence):
         # get parameters
         sequence = config['Sequence']
         # Number of cycles to generate
-        N_cycles = int(config['Number of cycles'])
+        N_cycles = round(config['Number of cycles'])
         randomize = config['Randomize']
         interleave = config['Interleave 1-QB Gate']
         multi_seq = config.get('Output multiple sequences', False)
@@ -620,7 +620,7 @@ class TwoQubit_RB(Sequence):
         qubits_to_benchmark = [int(config['Qubits to Benchmark'][0]) - 1,
                                int(config['Qubits to Benchmark'][2]) - 1]
         # Number of cycles to generate
-        N_cycles = int(config['Number of cycles'])
+        N_cycles = round(config['Number of cycles'])
         randomize = config['Randomize']
         interleave = config['Interleave 2-QB Gate']
         multi_seq = config.get('Output multiple sequences', False)
@@ -1060,7 +1060,7 @@ class TwoQubit_XEB(Sequence):
         qubits_to_benchmark = [int(config['Qubits to Benchmark'][0]) - 1,
                                int(config['Qubits to Benchmark'][2]) - 1]
         # Number of cycles to generate
-        N_cycles = int(config['Number of cycles'])
+        N_cycles = round(config['Number of cycles'])
         randomize = config['Randomize']
         multi_seq = config.get('Output multiple sequences', False)
         write_seq = config.get('Write sequence as txt file', False)
@@ -1121,7 +1121,7 @@ class TwoQubit_XEB(Sequence):
 
         
         # prepare generic sequence
-        pulse_n = int(config['Generic - Number of pulses'])
+        pulse_n = round(config['Generic - Number of pulses'])
         section = 'Generic'
         cycled_seq = get_custom_sequence(section, [f'Cycled pulse #{i+1}' for i in range(pulse_n)], config)
 

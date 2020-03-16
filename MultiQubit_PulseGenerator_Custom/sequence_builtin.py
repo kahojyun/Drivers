@@ -27,7 +27,7 @@ class CPMG(Sequence):
     def generate_sequence(self, config):
         """Generate sequence by adding gates/pulses to waveforms."""
         # get parameters
-        n_pulse = int(config['# of pi pulses'])
+        n_pulse = round(config['# of pi pulses'])
         pi_to_q = config['Add pi pulses to Q']
         duration = config['Sequence duration']
         edge_to_edge = config['Edge-to-edge pulses']
@@ -77,7 +77,7 @@ class PulseTrain(Sequence):
     def generate_sequence(self, config):
         """Generate sequence by adding gates/pulses to waveforms."""
         # get parameters
-        n_pulse = int(config['# of pulses'])
+        n_pulse = round(config['# of pulses'])
         alternate = config['Alternate pulse direction']
 
         if n_pulse == 0:
@@ -147,13 +147,13 @@ class ReadoutTraining(Sequence):
         """Generate sequence by adding gates/pulses to waveforms."""
 
         training_type = config['Training type']
-        state = int(config['Training, input state'])
+        state = round(config['Training, input state'])
         # currently only supports two states
         n_state = 2
 
         if training_type == 'Specific qubit':
             # specific qubit, just add gate
-            qubit = int(config['Training, qubit']) - 1
+            qubit = round(config['Training, qubit']) - 1
             if state:
                 self.add_gate(qubit, gates.Xp)
 
@@ -284,10 +284,10 @@ class GenericSequence(Sequence):
         """Generate sequence by adding gates/pulses to waveforms."""
 
         # prepare generic sequence
-        pulse_n = int(config['Generic - Number of pulses'])
-        pre_n = int(config['Generic - Number of pre-pulse'])
-        post_n = int(config['Generic - Number of post-pulse'])
-        cycle_n = int(config['Generic - Number of cycles'])
+        pulse_n = round(config['Generic - Number of pulses'])
+        pre_n = round(config['Generic - Number of pre-pulse'])
+        post_n = round(config['Generic - Number of post-pulse'])
+        cycle_n = round(config['Generic - Number of cycles'])
         section = 'Generic'
         pre_seq = get_custom_sequence(section, [f'Pre pulse #{i+1}' for i in range(pre_n)], config)
         cycled_seq = get_custom_sequence(section, [f'Cycled pulse #{i+1}' for i in range(pulse_n)], config)
@@ -310,7 +310,7 @@ class GenericSequence(Sequence):
         if spacing_type == 'Start-Start':
             cycle_dt -= cycled_seq['duration']
         
-        cycle_n = int(config['Generic - Number of cycles'])
+        cycle_n = round(config['Generic - Number of cycles'])
         # Pre-pulse
         if pre_n > 0:
             extra_dt = self.add_custom_sequence(extra_dt, pre_seq)

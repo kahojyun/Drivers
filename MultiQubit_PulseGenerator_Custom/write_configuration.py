@@ -38,7 +38,7 @@ if __name__ == "__main__":
     f = LDriverDefinition(dir_path/'MultiQubit_PulseGenerator_Custom.ini')
     f.add_general_settings(
         name='Multi-Qubit Pulse Generator Custom',
-        version='1.5.1',
+        version='1.5.2',
         driver_path='MultiQubit_PulseGenerator_Custom',
         signal_analyzer=True,
         signal_generator=True,
@@ -545,27 +545,31 @@ if __name__ == "__main__":
         'Generic - Number of cycles',
         label='Number of cycles',
         def_value=1,
-        low_lim=1,
+        low_lim=0,
     ))
 
-    f.add_quantity(LCombo(
+    f.add_quantity(LDouble(
         'Generic - Number of pulses',
         label='Number of cycled pulses',
-        combo=list(range(1, MAX_GENERIC_PULSE+1)),
+        def_value=1,
+        low_lim=0,
+        high_lim=MAX_GENERIC_PULSE,
     ))
 
-    f.add_quantity(LCombo(
+    f.add_quantity(LDouble(
         'Generic - Number of pre-pulse',
         label='Number of pre-pulse',
         def_value=0,
-        combo=list(range(0, MAX_GENERIC_PRE+1)),
+        low_lim=0,
+        high_lim=MAX_GENERIC_PRE,
     ))
 
-    f.add_quantity(LCombo(
+    f.add_quantity(LDouble(
         'Generic - Number of post-pulse',
         label='Number of post-pulse',
         def_value=0,
-        combo=list(range(0, MAX_GENERIC_POST+1)),
+        low_lim=0,
+        high_lim=MAX_GENERIC_POST,
     ))
 
     f.add_quantity(LCombo(

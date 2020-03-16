@@ -1424,12 +1424,12 @@ class SequenceToWaveforms:
         # filters
         self.use_gate_filter = config.get('Filter gate waveforms', False)
         self.gate_filter = config.get('Gate filter', 'Kaiser')
-        self.gate_filter_size = int(config.get('Gate - Filter size', 5))
+        self.gate_filter_size = round(config.get('Gate - Filter size', 5))
         self.gate_filter_kaiser_beta = config.get(
             'Gate - Kaiser beta', 14.0)
         self.use_z_filter = config.get('Filter Z waveforms', False)
         self.z_filter = config.get('Z filter', 'Kaiser')
-        self.z_filter_size = int(config.get('Z - Filter size', 5))
+        self.z_filter_size = round(config.get('Z - Filter size', 5))
         self.z_filter_kaiser_beta = config.get(
             'Z - Kaiser beta', 14.0)
 

@@ -25,3 +25,36 @@ Classes and code for generating waveforms for reading out superconducting qubits
 
 ## docs
 Run make html or make latexpdf to create the documentation for the driver.
+
+
+## Change log
+
+### v 1.5.2
+- Use `round` to get integer value from Labber config.
+- Use double datatype to store number of pulses in generic sequence section.
+
+### v 1.5.1
+- Generic sequence support custom pre/post pulse and cycling sequence.
+
+### v 1.5.0
+- Improve custom sequence pulse timing setting.
+
+### v 1.4.1
+Merge with YF edition.
+- Enable `readout_delay` to be <0.
+- Remove high/low limit on global Z offset amplitudes.
+- Add `readout Z shift` function.
+- Z gate definition.
+- Add support for readout IQ balance.
+- Unified pulse duration definition. 
+
+### v 1.4.0
+- Add 2QB XEB sequence.
+
+### v 1.3.0
+- Add generic sequence.
+- Add control for individual qubit's readout output.
+
+### v 1.2.0
+- Change definition of gaussian pulse truncation range.
+- Support predistortion of capacitor response.
