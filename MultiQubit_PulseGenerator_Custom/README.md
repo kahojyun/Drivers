@@ -29,6 +29,9 @@ Run make html or make latexpdf to create the documentation for the driver.
 
 ## Change log
 
+### v 1.6.1
+- Support multiple section readout pulses
+
 ### v 1.6.0
 - Support second order IIR filter predistortion.
 

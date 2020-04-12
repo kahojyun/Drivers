@@ -10,6 +10,7 @@ import pulses
 import qubits
 import readout
 import tomography
+import write_configuration as CONST
 
 # Allow logging to Labber's instrument log
 log = logging.getLogger('LabberDriver')
@@ -1452,11 +1453,7 @@ class SequenceToWaveforms:
         for n, pulse in enumerate(self.pulses_readout):
             # pulses are indexed from 1 in Labber
             m = n + 1
-            pulse = (getattr(pulses,
-                             config.get('Readout pulse type'))(complex=True))
-            pulse.truncation_range = config.get('Readout truncation range')
-            pulse.half_cosine = config.get('Readout half cosine')
-            pulse.start_at_zero = config.get('Readout start at zero')
+            pulse = pulses.ReadoutSquare(complex=True)
             pulse.iq_skew = config.get('Readout IQ skew') * np.pi / 180
             pulse.iq_ratio = config.get('Readout I/Q ratio')
 
@@ -1465,14 +1462,17 @@ class SequenceToWaveforms:
             else:
                 pulse.phase = 0
 
-            if config.get('Uniform readout pulse shape'):
-                pulse.width = config.get('Readout width')
-                pulse.plateau = config.get('Readout duration')
-            else:
-                pulse.width = config.get('Readout width #%d' % m)
-                pulse.plateau = config.get('Readout duration #%d' % m)
+            for i in range(CONST.MAX_READOUT_SECTION):
+                if config.get('Uniform readout pulse shape'):
+                    pulse.plateau.append(config.get(f'Readout duration {i+1}'))
+                else:
+                    pulse.plateau.append(config.get(f'Readout duration {i+1} #{m}'))
+                if config.get('Uniform readout amplitude'):
+                    pulse.rel_amplitude.append(config.get(f'Readout relative amplitude {i+1}'))
+                else:
+                    pulse.rel_amplitude.append(config.get(f'Readout relative amplitude {i+1} #{m}'))
 
-            if config.get('Uniform readout amplitude') is True:
+            if config.get('Uniform readout amplitude'):
                 pulse.amplitude = config.get('Readout amplitude')
             else:
                 pulse.amplitude = config.get('Readout amplitude #%d' % m)

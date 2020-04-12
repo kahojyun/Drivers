@@ -6,6 +6,7 @@ MAX_FOURIER_TERMS = 4
 MAX_CT_QUBITS = MAX_QUBITS
 Z_PREDISTORTION_TERMS_COMP = 1
 Z_PREDISTORTION_TERMS = 4
+MAX_READOUT_SECTION = 3
 
 # pulse timing options
 TIMING_NONE = 'Default'
@@ -39,7 +40,7 @@ if __name__ == "__main__":
     f = LDriverDefinition(dir_path/'MultiQubit_PulseGenerator_Custom.ini')
     f.add_general_settings(
         name='Multi-Qubit Pulse Generator Custom',
-        version='1.6.0',
+        version='1.6.1',
         driver_path='MultiQubit_PulseGenerator_Custom',
         signal_analyzer=True,
         signal_generator=True,
@@ -1841,45 +1842,6 @@ if __name__ == "__main__":
     #region Group: Readout
     f.add_group('Readout')
 
-    combo_pulse_type = LCombo(
-        'Readout pulse type',
-        label='Pulse type',
-        combo=PULSES_1QB,
-        def_value=PULSE_SQUARE,
-    )
-    f.add_quantity(combo_pulse_type)
-
-    f.add_quantity(LDouble(
-        'Readout truncation range',
-        label='Truncation range',
-        tooltip='Truncate at ? σ',
-        def_value=3,
-        state_quant=combo_pulse_type,
-        states=[
-            PULSE_GAUSSIAN,
-        ],
-    ))
-
-    f.add_quantity(LBoolean(
-        'Readout half cosine',
-        label='Half cosine',
-        def_value=False,
-        state_quant=combo_pulse_type,
-        states=[
-            PULSE_COSINE,
-        ],
-    ))
-
-    f.add_quantity(LBoolean(
-        'Readout start at zero',
-        label='Start at zero',
-        def_value=False,
-        state_quant=combo_pulse_type,
-        states=[
-            PULSE_GAUSSIAN,
-        ],
-    ))
-
     bool_uni_amp = LBoolean(
         'Uniform readout amplitude',
         label='Uniform amplitude',
@@ -1897,6 +1859,16 @@ if __name__ == "__main__":
         show_in_measurement_dlg=True,
     ))
 
+    for i in range(MAX_READOUT_SECTION):
+        f.add_quantity(LDouble(
+            f'Readout relative amplitude {i+1}',
+            label=f'Relative amplitude {i+1}',
+            def_value=1,
+            state_quant=bool_uni_amp,
+            states=True,
+            show_in_measurement_dlg=True,
+        ))
+
     bool_uni_shape = LBoolean(
         'Uniform readout pulse shape',
         label='Uniform pulse shape',
@@ -1904,26 +1876,16 @@ if __name__ == "__main__":
     )
     f.add_quantity(bool_uni_shape)
 
-    f.add_quantity(LDouble(
-        'Readout width',
-        label='Width',
-        def_value=10e-9,
-        low_lim=0,
-        unit='s',
-        state_quant=bool_uni_shape,
-        states=True,
-        show_in_measurement_dlg=True,
-    ))
-
-    f.add_quantity(LDouble(
-        'Readout duration',
-        label='Duration',
-        def_value=2e-6,
-        low_lim=0,
-        unit='s',
-        state_quant=bool_uni_shape,
-        states=True,
-    ))
+    for i in range(MAX_READOUT_SECTION):
+        f.add_quantity(LDouble(
+            f'Readout duration {i+1}',
+            label=f'Duration {i+1}',
+            def_value=2e-6,
+            low_lim=0,
+            unit='s',
+            state_quant=bool_uni_shape,
+            states=True,
+        ))
 
     f.add_quantity(LBoolean(
         'Match main sequence waveform size',
@@ -1996,26 +1958,25 @@ if __name__ == "__main__":
             states=False,
         ))
 
-        f.add_quantity(LDouble(
-            f'Readout width #{qubit}',
-            label='Width',
-            def_value=10e-9,
-            low_lim=0,
-            unit='s',
-            state_quant=bool_uni_shape,
-            states=False,
-            show_in_measurement_dlg=True,
-        ))
+        for j in range(MAX_READOUT_SECTION):
+            f.add_quantity(LDouble(
+                f'Readout relative amplitude {j+1} # {qubit}',
+                label=f'Relative amplitude {j+1}',
+                def_value=1,
+                state_quant=bool_uni_amp,
+                states=False,
+            ))
 
-        f.add_quantity(LDouble(
-            f'Readout duration #{qubit}',
-            label='Duration',
-            def_value=2e-6,
-            low_lim=0,
-            unit='s',
-            state_quant=bool_uni_shape,
-            states=False,
-        ))
+        for j in range(MAX_READOUT_SECTION):
+            f.add_quantity(LDouble(
+                f'Readout duration {j+1} #{qubit}',
+                label=f'Duration {j+1}',
+                def_value=2e-6,
+                low_lim=0,
+                unit='s',
+                state_quant=bool_uni_shape,
+                states=False,
+            ))
 
         f.add_quantity(LDouble(
             f'Readout frequency #{qubit}',

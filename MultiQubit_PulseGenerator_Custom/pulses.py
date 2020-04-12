@@ -210,6 +210,32 @@ class Square(Pulse):
         return values
 
 
+class ReadoutSquare(Pulse):
+    def __init__(self, complex):
+        super().__init__(complex)
+        self.plateau = []
+        self.rel_amplitude = []
+
+    def total_duration(self):
+        return np.sum(self.plateau)
+
+    def calculate_envelope(self, t0, t):
+        # reduce risk of rounding errors by putting checks between samples
+        if len(t) > 1:
+            t0 += (t[1] - t[0]) / 2.0
+
+        values = np.zeros_like(t)
+
+        t_start = t0 - self.total_duration()/2
+        for i, l in enumerate(self.plateau):
+            values[(t>=t_start)&(t<t_start+l)] = self.rel_amplitude[i]
+            t_start += l
+
+        values = values * self.amplitude
+
+        return values
+
+
 class Cosine(Pulse):
     def __init__(self, complex):
         super().__init__(complex)
