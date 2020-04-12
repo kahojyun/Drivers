@@ -29,6 +29,9 @@ Run make html or make latexpdf to create the documentation for the driver.
 
 ## Change log
 
+### v 1.6.0
+- Support second order IIR filter predistortion.
+
 ### v 1.5.2
 - Use `round` to get integer value from Labber config.
 - Use double datatype to store number of pulses in generic sequence section.

@@ -10,10 +10,16 @@
 # one mixer at a time. A challenge will be finding a good way to add the
 # transfer functions to a common file in a convenient way.
 
+import cmath
+
+
 import numpy as np
 from numpy.fft import fft, fftfreq, fftshift, ifft, ifftshift
 from scipy.interpolate import interp1d
 import scipy.signal as signal
+
+
+import write_configuration as CONST
 
 
 class Predistortion(object):
@@ -132,43 +138,47 @@ class Predistortion(object):
 
 
 class Filter:
-    r"""Filter signal with cascaded IIR filters and a FIR filter.
+    r"""Filter signal with an IIR filters and a FIR filter.
     
-    All IIR filters are first order, aiming to compensate distortion
-    in signal.
-
-    Transfer function of normal IIR filter:
-    .. math::
-        H(s) = 1 + \frac{A s}{s + B}
-    
-    Transfer function of IIR filter for compensating DC block effect:
-    .. math::
-        H(s) = 1 + \frac{s}{s + C}
+    The IIR filter is constucted from continous time transfer function in
+    zero-pole-gain form.
 
     Parameters
     ----------
     fs : float
         Sample rate
-    A : array_like
-        Coefficients for IIR filter
-    B : array_like
-        Coefficients for IIR filter
+    z : array_like
+    p : array_like
+    k : float
+        zeros, poles and gain of the IIR filter
     F : array_like, optional
         Coefficients for FIR filter
     gain : :obj:`float`, optional
     offset : :obj:`float`, optional
-    C : :obj:`float`, optional
-        If set, use an IIR filter to compensate DC block effect of capacitor.
+        Gain and offset of input signal. The signal actually input to filter is
+        `(data-offset)/gain`
     """
-
-    def __init__(self, fs, A, B, F=None, gain=1, offset=0, C=None):
+    F = None
+    gain = 1
+    offset = 0
+    
+    def __init__(self, fs, z, p, k, F=None, gain=1, offset=0):
         self.fs = fs
-        self.A = np.array(A, dtype='f8')
-        self.B = np.array(B, dtype='f8')
-        self.F = np.array(F, dtype='f8') if F is not None else None
+        self.z = np.array(z)
+        self.p = np.array(p)
+        self.k = k
+        if F is not None:
+            self.F = np.array(F, dtype='f8')
         self.gain = gain
         self.offset = offset
-        self.C = C
+        self._cache_sos()
+        
+    def _cache_sos(self):
+        """Converts continuous time zpk filter to discrete time sos filter."""
+        z = self.z
+        p = self.p
+        k = self.k
+        self._sos = signal.zpk2sos(*signal.bilinear_zpk(z, p, k, self.fs))
         
     def lfilter(self, data):
         """Applys filter to data.
@@ -183,27 +193,68 @@ class Filter:
         waveform: ndarray
             Filtered waveform
         """
-        if len(self.A) != len(self.B):
-            raise Exception('len(A) != len(B)')
-        if self.C is not None:
-            z, p = signal.bilinear([1., 0.], [1., self.C], self.fs)
-            data = signal.lfilter(p, z, data)
-        for i in range(len(self.A)):
-            z, p = signal.bilinear([1+self.A[i], self.B[i]], [1, self.B[i]], self.fs)
-            data = signal.lfilter(p, z, data)
+        data = (data-self.offset)/self.gain
+        data = signal.sosfilt(self._sos, data)
         if self.F is not None:
             data = signal.lfilter(self.F, [1.], data)
-        return data*self.gain + self.offset
+        return data
     
     def get_response_time(self):
-        return 6 * (1/self.B).max()
+        p = self.p
+        p = p[p!=0]
+        return 6 * (1/np.abs(p)).max()
     
     def __repr__(self):
         return (
-            f'Filter(fs={self.fs}, A={self.A!r}, B={self.B!r}, '
-            f'F={self.F!r}, gain={self.gain}, offset={self.offset}, '
-            f'C={self.C})'
+            f'Filter(fs={self.fs}, z={self.z!r}, p={self.p!r}, k={self.k}, '
+            f'F={self.F!r}, gain={self.gain}, offset={self.offset})'
         )
+
+
+def _convert_parameters_to_list(params, n_real, n_comp):
+    """Extracts IIR filter parameters from dict."""
+    zeros = []
+    poles = []
+    # First order, zero z<0
+    for i in range(n_real):
+        tauB = params[f'tauB{i+1}']
+        B = params[f'B{i+1}']
+        zeros.append(-1/tauB/(1+B))
+        poles.append(-1/tauB)
+    # Second order
+    for i in range(n_comp):
+        tauA = params[f'tauA{i+1}']
+        A = params[f'A{i+1}']
+        T = params[f'TA{i+1}']
+        phi = params[f'phiA{i+1}']
+        poles.extend([-1/tauA-2j*np.pi/T, -1/tauA+2j*np.pi/T])
+        # solve for zeros
+        a = 1 + A*np.cos(phi)
+        b = (1+a)/tauA - 2*np.pi*A*np.sin(phi)/T
+        c = 1/tauA**2 + (2*np.pi/T)**2
+        d = cmath.sqrt(b**2 - 4*a*c)
+        zeros.extend([(-b-d)/(2*a), (-b+d)/(2*a)])
+    return zeros, poles
+
+
+def get_invfilter_by_parameters(params, fs, n_real, n_comp, block_DC):
+    """Construct inverse IIR filter from dict."""
+    z, p = _convert_parameters_to_list(params, n_real, n_comp)
+    k = np.real(np.prod(p) / np.prod(z))
+    F = None
+    try:
+        gain = params['gain']
+        offset = params['offset']
+    except:
+        gain = 1
+        offset = 0
+    if block_DC:
+        tauC = params['tauC']
+        leakC = params['leakC']
+        z.append(-leakC/tauC)
+        p.append(-1/tauC)
+    # exchange zeros and poles to get inverse filter
+    return Filter(fs, p, z, 1/k, F, gain, offset)
 
 
 class ExponentialPredistortion:
@@ -243,14 +294,6 @@ class ExponentialPredistortion:
     """
 
     def __init__(self, waveform_number):
-        self.A1 = 0
-        self.tau1 = 0
-        self.A2 = 0
-        self.tau2 = 0
-        self.A3 = 0
-        self.tau3 = 0
-        self.A4 = 0
-        self.tau4 = 0
         self.fs = 1
         self.n = int(waveform_number)
 
@@ -268,29 +311,42 @@ class ExponentialPredistortion:
         else:
             m = self.n + 1
         self.fs = config.get('Sample rate')
-        self.use_str = bool(config.get(f'Predistort Z{m} - from string'))
-        if self.use_str:
-            self.filter_str = config.get(f'Predistort Z{m} - string')
+        use_str = bool(config.get(f'Predistort Z{m} - from string'))
+        if use_str:
+            filter_str = config.get(f'Predistort Z{m} - string')
             from numpy import array
             try:
-                self._filter = eval(self.filter_str)
+                self._filter = eval(filter_str)
             except:
-                self._filter = Filter(self.fs, [], [])
+                self._filter = Filter(self.fs, [], [], 1)
         else:
-            A = []
-            B = []
-            for i in range(4):
+            params = dict()
+            n_comp = 0
+            n_real = 0
+            for i in range(CONST.Z_PREDISTORTION_TERMS_COMP):
                 Ai = config.get(f'Predistort Z{m} - A{i+1}')
-                taui = config.get(f'Predistort Z{m} - tau{i+1}')
-                if Ai != 0 and taui > 0:
-                    A.append(Ai)
-                    B.append(1/taui)
+                tauAi = config.get(f'Predistort Z{m} - tauA{i+1}')
+                TAi = config.get(f'Predistort Z{m} - TA{i+1}')
+                phiAi = config.get(f'Predistort Z{m} - phiA{i+1}')
+                if Ai != 0 and tauAi > 0 and TAi > 0:
+                    n_comp += 1
+                    params[f'A{n_comp}'] = Ai
+                    params[f'tauA{n_comp}'] = tauAi
+                    params[f'TA{n_comp}'] = TAi
+                    params[f'phiA{n_comp}'] = phiAi * np.pi/180
+            for i in range(CONST.Z_PREDISTORTION_TERMS):
+                Bi = config.get(f'Predistort Z{m} - B{i+1}')
+                tauBi = config.get(f'Predistort Z{m} - tauB{i+1}')
+                if Bi != 0 and tauBi > 0:
+                    n_real += 1
+                    params[f'B{n_real}'] = Bi
+                    params[f'tauB{n_real}'] = tauBi
             tauC = config.get(f'Predistort Z{m} - tauC')
+            block_DC = False
             if tauC > 0:
-                C = 1/tauC
-            else:
-                C = None
-            self._filter = Filter(self.fs, A, B, C=C)
+                params[f'tauC'] = tauC
+                block_DC = True
+            self._filter = get_invfilter_by_parameters(params, self.fs, n_real, n_comp, block_DC)
 
 
     def predistort(self, waveform):

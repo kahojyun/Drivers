@@ -4,6 +4,7 @@ MAX_GENERIC_PRE = 3
 MAX_GENERIC_POST = 3
 MAX_FOURIER_TERMS = 4
 MAX_CT_QUBITS = MAX_QUBITS
+Z_PREDISTORTION_TERMS_COMP = 1
 Z_PREDISTORTION_TERMS = 4
 
 # pulse timing options
@@ -38,7 +39,7 @@ if __name__ == "__main__":
     f = LDriverDefinition(dir_path/'MultiQubit_PulseGenerator_Custom.ini')
     f.add_general_settings(
         name='Multi-Qubit Pulse Generator Custom',
-        version='1.5.2',
+        version='1.6.0',
         driver_path='MultiQubit_PulseGenerator_Custom',
         signal_analyzer=True,
         signal_generator=True,
@@ -1743,29 +1744,59 @@ if __name__ == "__main__":
         )
         f.add_quantity(bool_from_str)
 
-        for j in range(Z_PREDISTORTION_TERMS):
+        for j in range(Z_PREDISTORTION_TERMS_COMP):
             f.add_quantity(LDouble(
                 f'Predistort Z{qubit} - A{j+1}',
                 label=f'A{j+1}',
+                tooltip='Amplitude of second-order IIR filter',
             ))
             f.add_quantity(LDouble(
-                f'Predistort Z{qubit} - tau{j+1}',
-                label=f'tau{j+1}',
+                f'Predistort Z{qubit} - tauA{j+1}',
+                label=f'tau A{j+1}',
+                tooltip='Decay time of second-order IIR filter',
+                low_lim=0,
+                unit='s',
+            ))
+            f.add_quantity(LDouble(
+                f'Predistort Z{qubit} - TA{j+1}',
+                label=f'T A{j+1}',
+                tooltip='Oscillation period of second-order IIR filter',
+                low_lim=0,
+                unit='s',
+            ))
+            f.add_quantity(LDouble(
+                f'Predistort Z{qubit} - phiA{j+1}',
+                label=f'phi A{j+1}',
+                tooltip='Initial phase of second-order IIR filter',
+                unit='deg',
+            ))
+
+        for j in range(Z_PREDISTORTION_TERMS):
+            f.add_quantity(LDouble(
+                f'Predistort Z{qubit} - B{j+1}',
+                label=f'B{j+1}',
+                tooltip='Amplitude of first-order IIR filter',
+            ))
+            f.add_quantity(LDouble(
+                f'Predistort Z{qubit} - tauB{j+1}',
+                label=f'tau B{j+1}',
+                tooltip='Decay time of first-order IIR filter',
+                low_lim=0,
+                unit='s',
             ))
 
         f.add_quantity(LDouble(
             f'Predistort Z{qubit} - tauC',
-            label=f'tauC',
+            label=f'tau C',
             tooltip='Time constant for capacitor.',
+            low_lim=0,
+            unit='s',
         ))
 
         f.add_quantity(LString(
             f'Predistort Z{qubit} - string',
             label=f'Representation string',
-            tooltip=(
-                'String representation for `Filter`, eg. Filter(fs=..., A=..., '
-                'B=..., C=...)'
-            ),
+            tooltip='String representation for `Filter`',
         ))
     #endregion Group: Z
     #endregion Section: Predistortion
