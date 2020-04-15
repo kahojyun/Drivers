@@ -1134,7 +1134,7 @@ class TwoQubit_XEB(Sequence):
             else:
                 self.add_gate(qubit=qubits_to_benchmark, gate=gate_seq, dt=dt+extra_dt)
                 extra_dt = 0
-        self.add_gate_to_all(gates.I, dt=extra_dt)
+        self.add_gate_to_all(gates.I0, dt=extra_dt)
 
 if __name__ == '__main__':
     pass

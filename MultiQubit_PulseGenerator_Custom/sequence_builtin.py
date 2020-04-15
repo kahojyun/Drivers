@@ -324,7 +324,7 @@ class GenericSequence(Sequence):
         if post_n > 0:
             extra_dt += post_cycle_dt
             extra_dt = self.add_custom_sequence(extra_dt, post_seq)
-        self.add_gate_to_all(gates.I, dt=extra_dt)
+        self.add_gate_to_all(gates.I0, dt=extra_dt)
 
 
 if __name__ == '__main__':
