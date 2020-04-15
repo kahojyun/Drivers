@@ -1369,7 +1369,7 @@ if __name__ == "__main__":
         def_value=0,
         low_lim=0,
         unit='s',
-        state_quant=bool_uni_shape,
+        state_quant=bool_uni,
         states=True,
         show_in_measurement_dlg=True,
     ))
