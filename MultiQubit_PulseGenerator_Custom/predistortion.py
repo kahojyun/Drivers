@@ -345,6 +345,7 @@ class ExponentialPredistortion:
             block_DC = False
             if tauC > 0:
                 params[f'tauC'] = tauC
+                params['leakC'] = config.get(f'Predistort Z{m} - leakC')
                 block_DC = True
             self._filter = get_invfilter_by_parameters(params, self.fs, n_real, n_comp, block_DC)
 

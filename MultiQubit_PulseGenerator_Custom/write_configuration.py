@@ -1794,6 +1794,15 @@ if __name__ == "__main__":
             unit='s',
         ))
 
+        f.add_quantity(LDouble(
+            f'Predistort Z{qubit} - leakC',
+            label=f'leak C',
+            tooltip='leak voltage of capacitor.',
+            def_value=0,
+            low_lim=0,
+            high_lim=1,
+        ))
+
         f.add_quantity(LString(
             f'Predistort Z{qubit} - string',
             label=f'Representation string',
