@@ -7,7 +7,7 @@ MAX_CT_QUBITS = MAX_QUBITS
 Z_PREDISTORTION_TERMS_COMP = 1
 Z_PREDISTORTION_TERMS = 4
 MAX_READOUT_SECTION = 3
-__version__ = '1.6.2'
+__version__ = '1.6.3'
 
 # pulse timing options
 TIMING_NONE = 'Default'
@@ -271,6 +271,16 @@ if __name__ == "__main__":
             'CZ',
             'iSWAP',
         ],
+        state_quant=combo_seq,
+        states=[
+            seq_2qrb,
+        ],
+        show_in_measurement_dlg=True,
+    ))
+
+    f.add_quantity(LBoolean(
+        'Use custom pulse',
+        def_value=False,
         state_quant=combo_seq,
         states=[
             seq_2qrb,

@@ -601,6 +601,19 @@ class TwoQubit_RB(Sequence):
     #     super(Sequence, self).__init__(*args, **kwargs)
     #     self.filepath_lookup_table = ""
 
+    def add_custom_sequence(self, extra_dt, seq):
+        lqubit = seq['lqubit']
+        lpulse = seq['lpulse']
+        lline = seq['lline']
+        ldt = seq['ldt']
+        dt_before = seq['dt_before']
+        dt_after = seq['dt_after']
+        extra_dt += dt_before
+        for i in range(len(lpulse)):
+            self.add_single_pulse(lqubit[i], lpulse[i], lline[i], dt=ldt[i]+extra_dt)
+            extra_dt = 0
+        return dt_after
+
     def generate_sequence(self, config):
         """
         Generate sequence by adding gates/pulses to waveforms.
@@ -763,15 +776,26 @@ class TwoQubit_RB(Sequence):
             multi_gate_seq = list(map(list, itertools.zip_longest(*multi_gate_seq, fillvalue=gates.I))) # Not to chop
 
             # self.add_gates(multi_gate_seq)
-            for gate_seq in multi_gate_seq:
-                if ((gate_seq[0] == gates.CZ) or (gate_seq[0] == gates.iSWAP)):
-                    self.add_gate(qubit=qubits_to_benchmark, gate=gate_seq[0])
-                else:
-                    self.add_gate(qubit=qubits_to_benchmark, gate=gate_seq)
             self.prev_gate_seq = multi_gate_seq
+        
+        if config.get('Use custom pulse'):
+            # prepare generic sequence
+            pulse_n = round(config['Generic - Number of pulses'])
+            section = 'Generic'
+            cycled_seq = get_custom_sequence(section, [f'Cycled pulse #{i+1}' for i in range(pulse_n)], config)
+            
+            dt = config.get('Pulse spacing')
+            extra_dt = 0
+            for gate_seq in self.prev_gate_seq:
+                if ((gate_seq[0] == gates.CZ) or (gate_seq[0] == gates.iSWAP)):
+                    extra_dt += dt
+                    extra_dt = self.add_custom_sequence(extra_dt, cycled_seq)
+                else:
+                    self.add_gate(qubit=qubits_to_benchmark, gate=gate_seq, dt=dt+extra_dt)
+                    extra_dt = 0
         else:
             for gate_seq in self.prev_gate_seq:
-                if gate_seq[0] == gates.CZ:
+                if ((gate_seq[0] == gates.CZ) or (gate_seq[0] == gates.iSWAP)):
                     self.add_gate(qubit=qubits_to_benchmark, gate=gate_seq[0])
                 else:
                     self.add_gate(qubit=qubits_to_benchmark, gate=gate_seq)

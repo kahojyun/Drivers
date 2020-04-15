@@ -29,6 +29,10 @@ Run make html or make latexpdf to create the documentation for the driver.
 
 ## Change log
 
+### v 1.6.3
+- Fix 2Q uniform plateau
+- Support using custom pulse in 2QRB
+
 ### v 1.6.2
 - Fix additional spacing between readout pulse and gate sequence in Generic or XEB sequence.
 - Add copy & paste functions for generic sequence.
