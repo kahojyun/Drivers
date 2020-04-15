@@ -3,6 +3,9 @@ import importlib
 import os
 import sys
 import copy
+import re
+copy_re = re.compile('Generic - (.*) - Copy')
+paste_re = re.compile('Generic - (.*) - Paste')
 
 import numpy as np
 
@@ -26,6 +29,27 @@ SEQUENCES = {'Rabi': Rabi,
              '2-QB XEB': TwoQubit_XEB,
              'Custom': type(None)}
 
+CUSTOM_PULSE_KEYS = [
+    'Add to qubit',
+    'Add to line',
+    'Pulse timing',
+    'Pulse timing reference',
+    'Pulse timing locate',
+    'Pulse timing time',
+    'Pulse type',
+    'Truncation range',
+    'Half cosine',
+    'Start at zero',
+    'Use DRAG',
+    'Amplitude',
+    'Phase',
+    'Width',
+    'Plateau',
+    'Frequency',
+    'DRAG scaling',
+    'DRAG frequency detuning',
+]
+
 
 class Driver(LabberDriver):
     """This class implements a multi-qubit pulse generator."""
@@ -36,6 +60,7 @@ class Driver(LabberDriver):
         self.sequence = None
         self.sequence_to_waveforms = SequenceToWaveforms(1)
         self.waveforms = {}
+        self.template = None
         # always create a sequence at startup
         name = self.getValue('Sequence')
         self.sendValueToOther('Sequence', name)
@@ -75,6 +100,15 @@ class Driver(LabberDriver):
             # the custom sequence class has to be named 'CustomSequence'
             if not isinstance(self.sequence, mod.CustomSequence):
                 self.sequence = mod.CustomSequence(1)
+
+        else:
+            re_result = copy_re.fullmatch(quant.name)
+            if re_result:
+                self.copy_as_template(re_result.group(1))
+            else:
+                re_result = paste_re.fullmatch(quant.name)
+                if re_result:
+                    self.paste_template(re_result.group(1))
         return value
 
     def performGetValue(self, quant, options={}):
@@ -234,6 +268,16 @@ class Driver(LabberDriver):
         dt = 1 / self.sequence_to_waveforms.sample_rate
         value = quant.getTraceDict(value, dt=dt)
         return value
+
+    def copy_as_template(self, group):
+        self.template = {}
+        for k in CUSTOM_PULSE_KEYS:
+            self.template[k] = self.getValue(f'Generic - {group} - {k}')
+
+    def paste_template(self, group):
+        if self.template is not None:
+            for k in CUSTOM_PULSE_KEYS:
+                self.sendValueToOther(f'Generic - {group} - {k}', self.template[k])
 
 
 if __name__ == '__main__':

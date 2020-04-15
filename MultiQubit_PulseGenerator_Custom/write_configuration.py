@@ -7,6 +7,7 @@ MAX_CT_QUBITS = MAX_QUBITS
 Z_PREDISTORTION_TERMS_COMP = 1
 Z_PREDISTORTION_TERMS = 4
 MAX_READOUT_SECTION = 3
+__version__ = '1.6.2'
 
 # pulse timing options
 TIMING_NONE = 'Default'
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     f = LDriverDefinition(dir_path/'MultiQubit_PulseGenerator_Custom.ini')
     f.add_general_settings(
         name='Multi-Qubit Pulse Generator Custom',
-        version='1.6.1',
+        version=__version__,
         driver_path='MultiQubit_PulseGenerator_Custom',
         signal_analyzer=True,
         signal_generator=True,
@@ -618,6 +619,16 @@ if __name__ == "__main__":
 
     def write_custom_pulse(section, group):
         f.add_group(group)
+
+        f.add_quantity(LButton(
+            f'{section} - {group} - Copy',
+            label='Copy as template',
+        ))
+
+        f.add_quantity(LButton(
+            f'{section} - {group} - Paste',
+            label='Use template',
+        ))
 
         f.add_quantity(LCombo(
             f'{section} - {group} - Add to qubit',
