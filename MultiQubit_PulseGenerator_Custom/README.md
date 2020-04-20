@@ -29,6 +29,9 @@ Run make html or make latexpdf to create the documentation for the driver.
 
 ## Change log
 
+### v 1.6.4
+- Increase maximum number of pre/post pulses.
+
 ### v 1.6.3
 - Fix 2Q uniform plateau
 - Support using custom pulse in 2QRB
