@@ -4,6 +4,7 @@ MAX_GENERIC_PRE = 5
 MAX_GENERIC_POST = 5
 MAX_FOURIER_TERMS = 4
 MAX_CT_QUBITS = MAX_QUBITS
+MAX_CT_MANUAL = 3
 Z_PREDISTORTION_TERMS_COMP = 1
 Z_PREDISTORTION_TERMS = 4
 MAX_READOUT_SECTION = 3
@@ -1842,28 +1843,53 @@ if __name__ == "__main__":
         def_value=False,
     ))
 
+    bool_file = LBoolean(
+        'Cross talk - From file',
+        label='From file',
+        def_value=False,
+    )
+    f.add_quantity(bool_file)
+
     f.add_quantity(LPath(
         'Cross-talk (CT) matrix',
+        state_quant=bool_file,
+        states=True,
     ))
 
+    # bool_ct_1to1 = LBoolean(
+    #     '1-1 QB <--> Crosstalk matrix',
+    #     tooltip='One-to-one QB to Cross-talk matrix element correspondence',
+    #     def_value=True,
+    # )
+    # f.add_quantity(bool_ct_1to1)
+
+    # for i in range(MAX_CT_QUBITS):
+    #     f.add_quantity(LCombo(
+    #         f'CT-matrix element #{i+1}',
+    #         tooltip=(
+    #             'Which QB/output corresponds to which element of the cross-talk '
+    #             'matrix'
+    #         ),
+    #         def_value='None',
+    #         combo=qubit_list + ['None'],
+    #         state_quant=bool_ct_1to1,
+    #         states=False,
+    #     ))
+
     f.add_quantity(LBoolean(
-        '1-1 QB <--> Crosstalk matrix',
-        tooltip='One-to-one QB to Cross-talk matrix element correspondence',
+        'Calculate inverse matrix',
         def_value=True,
     ))
 
-    for i in range(MAX_CT_QUBITS):
-        f.add_quantity(LCombo(
-            f'CT-matrix element #{i+1}',
-            tooltip=(
-                'Which QB/output corresponds to which element of the cross-talk '
-                'matrix'
-            ),
-            def_value='None',
-            combo=qubit_list + ['None'],
-            state_quant=combo_qubits,
-            states=qubit_list[i:MAX_CT_QUBITS],
-        ))
+    for i in range(MAX_CT_MANUAL):
+        for j in range(MAX_CT_MANUAL):
+            if i != j:
+                f.add_quantity(LDouble(
+                    f'CT-matrix #{i+1}-#{j+1}',
+                    def_value=0,
+                    state_quant=bool_file,
+                    states=False,
+                ))
     #endregion Group: Cross-talk
     #endregion Section: Cross-talk
 

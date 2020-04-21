@@ -31,6 +31,7 @@ Run make html or make latexpdf to create the documentation for the driver.
 
 ### v 1.6.4
 - Increase maximum number of pre/post pulses.
+- Crosstalk matrix input.
 
 ### v 1.6.3
 - Fix 2Q uniform plateau

@@ -1162,9 +1162,11 @@ class SequenceToWaveforms:
                     end = self._round(step.t_end + delay)
 
                 if (self.compensate_crosstalk and
-                    isinstance(gate_obj,
+                    (isinstance(gate_obj,
                                (gates.SingleQubitZRotation,
-                                gates.TwoQubitGate))):
+                                gates.TwoQubitGate)) or
+                     (isinstance(gate_obj, gates.CustomGate) and
+                      gate_obj.line == 'Z'))):
                     for q in range(self.n_qubit):
                         waveform = self._wave_z[q]
                         delay = self.wave_z_delays[q]
@@ -1193,8 +1195,8 @@ class SequenceToWaveforms:
                             t0 = middle + (max_duration - gate.duration) / 2
 
                         scaling_factor = float(crosstalk[q, 0])
-                        if q != qubit:
-                            scaling_factor = -scaling_factor
+                        # if q != qubit:
+                        #     scaling_factor = -scaling_factor
                         waveform[indices] += (
                             scaling_factor
                             * gate.pulse.calculate_waveform(t0, t))
