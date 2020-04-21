@@ -60,13 +60,13 @@ class Driver(InstrumentDriver.InstrumentWorker):
             ch2 = self.getValue('Ch2 - Enabled')
             # Set nRecord accordingly and check if need measure new traces.
             bNeedMeasure = False
+            nRecord = int(self.getValue('Number of records'))
             if self.isHardwareLoop(options):
                 i, n_pts = self.getHardwareLoopIndex(options)
-                nRecord = n_pts
+                nRecord *= n_pts
                 if i == 0 and self.isFirstCall(options):
                     bNeedMeasure = True
             else:
-                nRecord = int(self.getValue('Number of records'))
                 if self.isFirstCall(options):
                     bNeedMeasure = True
             if bNeedMeasure:
@@ -92,8 +92,9 @@ class Driver(InstrumentDriver.InstrumentWorker):
                     rs = self.vData.reshape(nRecord, -1)
                     self.lTrace[1] = self.channel_range[1] * rs[:, :nSample].flatten()
                 if self.isHardwareLoop(options):
-                    self.lTrace[0].shape = (nRecord, -1)
-                    self.lTrace[1].shape = (nRecord, -1)
+                    nRecord = int(self.getValue('Number of records'))
+                    self.lTrace[0] = np.swapaxes(self.lTrace[0].reshape(nRecord, n_pts, -1), 0, 1).reshape(n_pts, -1)
+                    self.lTrace[1] = np.swapaxes(self.lTrace[1].reshape(nRecord, n_pts, -1), 0, 1).reshape(n_pts, -1)
             if self.isHardwareLoop(options):
                 value = quant.getTraceDict(self.lTrace[self.signal_index[quant.name]][i],
                                             dx=1/self.getValue('Sample rate'))
@@ -110,11 +111,10 @@ class Driver(InstrumentDriver.InstrumentWorker):
         # check quant names, arm if want traces
         if not np.any([name in self.signal_index.keys() for name in quant_names]):
             return
+        nRecord = int(self.getValue('Number of records'))
         if self.isHardwareLoop(options):
             i, n_pts = self.getHardwareLoopIndex(options)
-            nRecord = n_pts
-        else:
-            nRecord = int(self.getValue('Number of records'))
+            nRecord *= n_pts
         nAverage = int(self.getValue('Number of averages'))
         self.arming(nRecord, nAverage)
 
