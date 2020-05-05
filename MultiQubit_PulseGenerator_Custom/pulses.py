@@ -165,8 +165,10 @@ class Gaussian(Pulse):
                 values += ((t >= (t0 + self.plateau / 2)) * np.exp(
                     -(t - (t0 + self.plateau / 2))**2 / (2 * std**2)))
 
+        mask = (t>=(t0-self.total_duration()/2)) & (t<=(t0+self.total_duration()/2))
+        values[~mask] = 0
         if self.start_at_zero:
-            values = values - values.min()
+            values[mask] = values[mask] - values[mask].min()
             # renormalize max value to 1
             values = values / values.max()
         values = values * self.amplitude
@@ -286,7 +288,7 @@ class Cosine(Pulse):
         return values
 
 
-class CZ(Pulse):
+class Slepian(Pulse):
     def __init__(self, *args, **kwargs):
         super().__init__(False)
         # For CZ pulses
@@ -388,24 +390,20 @@ class CZ(Pulse):
                     np.sin(self.theta_tau[0:i+1]), x=tau[0:i+1])
                 # self.t_tau[i] = np.sum(np.sin(self.theta_tau[0:i+1]))*(tau[1]-tau[0])
 
-class NetZero(CZ):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-        self.slepian = None
+class NetZero(Pulse):
+    def __init__(self, pulse, *args, **kwargs):
+        super().__init__(False)
+        self.__dict__ = copy.copy(pulse.__dict__)
+        self.pulse = copy.copy(pulse)
+        self.pulse.width /= 2
+        self.pulse.plateau /= 2
 
     def total_duration(self):
-        return 2*self.slepian.total_duration()
-
-    def calculate_cz_waveform(self):
-        self.slepian = CZ()
-        self.slepian.__dict__ = copy.copy(self.__dict__)
-        self.slepian.width /= 2
-        self.slepian.plateau /= 2
-        self.slepian.calculate_cz_waveform()
+        return 2*self.pulse.total_duration()
 
     def calculate_envelope(self, t0, t):
-        return (self.slepian.calculate_envelope(t0-self.total_duration()/4, t) -
-                self.slepian.calculate_envelope(t0+self.total_duration()/4, t))
+        return (self.pulse.calculate_envelope(t0-self.total_duration()/4, t) -
+                self.pulse.calculate_envelope(t0+self.total_duration()/4, t))
 
 
 if __name__ == '__main__':

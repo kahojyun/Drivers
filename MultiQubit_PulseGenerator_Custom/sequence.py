@@ -1315,7 +1315,10 @@ class SequenceToWaveforms:
             else:
                 pulse.amplitude = config.get('Amplitude #%d, Z' % m)
 
-            self.pulses_1qb_z[n] = pulse
+            if config.get('Net zero, Z'):
+                self.pulses_1qb_z[n] = pulses.NetZero(pulse)
+            else:
+                self.pulses_1qb_z[n] = pulse
 
         #readout z shift
         self.use_readout_z_shift=config.get('Use readout Z shift')
@@ -1339,14 +1342,14 @@ class SequenceToWaveforms:
             pulse = (getattr(pulses,
                              config.get('Pulse type, 2QB'))(complex=False))
 
-            if config.get('Pulse type, 2QB') in ['CZ', 'NetZero']:
+            if config.get('Pulse type, 2QB') == 'Slepian':
                 pulse.F_Terms = int(config.get('Fourier terms, 2QB'))
                 if config.get('Uniform 2QB pulses'):
                     pulse.width = config.get('Width, 2QB')
                     pulse.plateau = config.get('Plateau, 2QB')
                 else:
                     pulse.width = config.get('Width, 2QB' + s)
-                    pulse.plateau = config.get('Plateau, 2QB')
+                    pulse.plateau = config.get('Plateau, 2QB'+ s)
 
                 # spectra
                 if config.get('Assume linear dependence' + s, True):
@@ -1381,8 +1384,6 @@ class SequenceToWaveforms:
                 pulse.dfdV = config.get('df/dV, 2QB' + s)
                 pulse.negative_amplitude = config.get('Negative amplitude' + s)
 
-                pulse.calculate_cz_waveform()
-
             else:
                 pulse.truncation_range = config.get('Truncation range, 2QB')
                 pulse.half_cosine = config.get('Half cosine, 2QB')
@@ -1400,7 +1401,10 @@ class SequenceToWaveforms:
             gates.CZ.new_angles(
                 config.get('QB1 Phi 2QB #12'), config.get('QB2 Phi 2QB #12'))
 
-            self.pulses_2qb[n] = pulse
+            if config.get('Net zero, 2QB'):
+                self.pulses_2qb[n] = pulses.NetZero(pulse)
+            else:
+                self.pulses_2qb[n] = pulse
 
         # predistortion
         self.perform_predistortion = config.get('Predistort waveforms', False)

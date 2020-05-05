@@ -199,6 +199,8 @@ def get_custom_pulse(section, group, prev_duration, config):
         pulse.truncation_range = config[f'{section} - {group} - Truncation range']
     elif pulse_type == CONST.PULSE_COSINE:
         pulse.half_cosine = config[f'{section} - {group} - Half cosine']
+    if config.get(f'{section} - {group} - Net zero'):
+        pulse = pulses.NetZero(pulse)
 
     # Pulse timing
     t0 = None

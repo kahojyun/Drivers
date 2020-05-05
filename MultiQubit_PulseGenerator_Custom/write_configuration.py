@@ -8,7 +8,7 @@ MAX_CT_MANUAL = 3
 Z_PREDISTORTION_TERMS_COMP = 1
 Z_PREDISTORTION_TERMS = 4
 MAX_READOUT_SECTION = 3
-__version__ = '1.6.4'
+__version__ = '1.6.5'
 
 # pulse timing options
 TIMING_NONE = 'Default'
@@ -27,11 +27,9 @@ PULSES_1QB = [
     PULSE_COSINE,
 ]
 # 2qb
-PULSE_CZ = 'CZ'
-PULSE_NETZERO = 'NetZero'
+PULSE_SLEPIAN = 'Slepian'
 PULSES_2QB = [
-    PULSE_CZ,
-    PULSE_NETZERO,
+    PULSE_SLEPIAN,
 ]
 
 if __name__ == "__main__":
@@ -739,6 +737,12 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LBoolean(
+            f'{section} - {group} - Net zero',
+            label='Net zero',
+            def_value=False,
+        ))
+
+        f.add_quantity(LBoolean(
             f'{section} - {group} - Start at zero',
             label='Start at zero',
             def_value=False,
@@ -1082,6 +1086,12 @@ if __name__ == "__main__":
         ],
     ))
 
+    f.add_quantity(LBoolean(
+        'Net zero, Z',
+        label='Net zero',
+        def_value=False,
+    ))
+
     bool_uni_amp = LBoolean(
         'Uniform amplitude, Z',
         label='Uniform amplitude',
@@ -1322,7 +1332,7 @@ if __name__ == "__main__":
         'Pulse type, 2QB',
         label='Pulse type',
         combo=PULSES_1QB + PULSES_2QB,
-        def_value=PULSE_CZ,
+        def_value=PULSE_SLEPIAN,
     )
     f.add_quantity(combo_pulse_type)
 
@@ -1355,6 +1365,12 @@ if __name__ == "__main__":
         states=[
             PULSE_GAUSSIAN,
         ],
+    ))
+    
+    f.add_quantity(LBoolean(
+        'Net zero, 2QB',
+        label='Net zero',
+        def_value=False,
     ))
 
     bool_uni = LBoolean(
@@ -1397,8 +1413,7 @@ if __name__ == "__main__":
         ),
         state_quant=combo_pulse_type,
         states=[
-            PULSE_CZ,
-            PULSE_NETZERO,
+            PULSE_SLEPIAN,
         ],
     )
     f.add_quantity(combo_fourier)
@@ -1453,8 +1468,7 @@ if __name__ == "__main__":
             ),
             state_quant=combo_pulse_type,
             states=[
-                PULSE_CZ,
-                PULSE_NETZERO,
+                PULSE_SLEPIAN,
             ],
         ))
 
@@ -1469,8 +1483,7 @@ if __name__ == "__main__":
             ),
             state_quant=combo_pulse_type,
             states=[
-                PULSE_CZ,
-                PULSE_NETZERO,
+                PULSE_SLEPIAN,
             ],
         ))
 
@@ -1485,8 +1498,7 @@ if __name__ == "__main__":
             ),
             state_quant=combo_pulse_type,
             states=[
-                PULSE_CZ,
-                PULSE_NETZERO,
+                PULSE_SLEPIAN,
             ],
         ))
 
@@ -1501,8 +1513,7 @@ if __name__ == "__main__":
             ),
             state_quant=combo_pulse_type,
             states=[
-                PULSE_CZ,
-                PULSE_NETZERO,
+                PULSE_SLEPIAN,
             ],
         ))
 
@@ -1514,8 +1525,7 @@ if __name__ == "__main__":
             tooltip='Coupling strength between |11> state and |02> state',
             state_quant=combo_pulse_type,
             states=[
-                PULSE_CZ,
-                PULSE_NETZERO,
+                PULSE_SLEPIAN,
             ],
         ))
 
@@ -1540,12 +1550,13 @@ if __name__ == "__main__":
                 states=fourier_terms[j-1:],
             ))
         
-        for j in range(2):
-            f.add_quantity(LDouble(
-                f'QB{j+1} Phi 2QB #{i+1}{i+2}',
-                label=f'QB{j+1} Phase shift',
-                def_value=0,
-            ))
+        if i==0:
+            for j in range(2):
+                f.add_quantity(LDouble(
+                    f'QB{j+1} Phi 2QB #{i+1}{i+2}',
+                    label=f'QB{j+1} Phase shift',
+                    def_value=0,
+                ))
 
         f.add_quantity(LBoolean(
             f'Negative amplitude #{i+1}{i+2}',
@@ -1554,8 +1565,7 @@ if __name__ == "__main__":
             tooltip='Flip the sign of the amplitude of the CZ pulse',
             state_quant=combo_pulse_type,
             states=[
-                PULSE_CZ,
-                PULSE_NETZERO,
+                PULSE_SLEPIAN,
             ],
         ))
     #endregion Group: 2-QB pulse #

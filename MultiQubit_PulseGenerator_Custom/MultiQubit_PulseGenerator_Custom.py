@@ -40,6 +40,7 @@ CUSTOM_PULSE_KEYS = [
     'Truncation range',
     'Half cosine',
     'Start at zero',
+    'Net zero',
     'Use DRAG',
     'Amplitude',
     'Phase',
