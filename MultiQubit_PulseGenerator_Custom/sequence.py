@@ -1320,9 +1320,10 @@ class SequenceToWaveforms:
                 pulse.amplitude = config.get('Amplitude #%d, Z' % m)
 
             if config.get('Net zero, Z'):
-                self.pulses_1qb_z[n] = pulses.NetZero(pulse)
-            else:
-                self.pulses_1qb_z[n] = pulse
+                pulse = pulses.NetZero(pulse)
+                pulse.net_zero_delay = config.get('Net zero delay, Z')
+
+            self.pulses_1qb_z[n] = pulse
 
         #readout z shift
         self.use_readout_z_shift=config.get('Use readout Z shift')
@@ -1406,9 +1407,9 @@ class SequenceToWaveforms:
                 config.get('QB1 Phi 2QB #12'), config.get('QB2 Phi 2QB #12'))
 
             if config.get('Net zero, 2QB'):
-                self.pulses_2qb[n] = pulses.NetZero(pulse)
-            else:
-                self.pulses_2qb[n] = pulse
+                pulse = pulses.NetZero(pulse)
+                pulse.net_zero_delay = config.get('Net zero delay, 2QB')
+            self.pulses_2qb[n] = pulse
             self.pulses_2qb_on[n] = config.get('On qubit, 2QB' + s)
 
         # predistortion

@@ -397,13 +397,15 @@ class NetZero(Pulse):
         self.pulse = copy.copy(pulse)
         self.pulse.width /= 2
         self.pulse.plateau /= 2
+        self.net_zero_delay = 0
 
     def total_duration(self):
-        return 2*self.pulse.total_duration()
+        return 2*self.pulse.total_duration() + self.net_zero_delay
 
     def calculate_envelope(self, t0, t):
-        return (self.pulse.calculate_envelope(t0-self.total_duration()/4, t) -
-                self.pulse.calculate_envelope(t0+self.total_duration()/4, t))
+        t_offset = (self.pulse.total_duration() + self.net_zero_delay) / 2
+        return (self.pulse.calculate_envelope(t0-t_offset, t) -
+                self.pulse.calculate_envelope(t0+t_offset, t))
 
 
 if __name__ == '__main__':

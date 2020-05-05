@@ -41,6 +41,7 @@ CUSTOM_PULSE_KEYS = [
     'Half cosine',
     'Start at zero',
     'Net zero',
+    'Net zero delay',
     'Use DRAG',
     'Amplitude',
     'Phase',

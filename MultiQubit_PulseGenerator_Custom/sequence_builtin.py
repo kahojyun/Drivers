@@ -201,6 +201,7 @@ def get_custom_pulse(section, group, prev_duration, config):
         pulse.half_cosine = config[f'{section} - {group} - Half cosine']
     if config.get(f'{section} - {group} - Net zero'):
         pulse = pulses.NetZero(pulse)
+        pulse.net_zero_delay = config.get(f'{section} - {group} - Net zero delay')
 
     # Pulse timing
     t0 = None

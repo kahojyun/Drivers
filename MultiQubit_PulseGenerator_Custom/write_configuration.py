@@ -737,12 +737,6 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LBoolean(
-            f'{section} - {group} - Net zero',
-            label='Net zero',
-            def_value=False,
-        ))
-
-        f.add_quantity(LBoolean(
             f'{section} - {group} - Start at zero',
             label='Start at zero',
             def_value=False,
@@ -750,6 +744,23 @@ if __name__ == "__main__":
             states=[
                 PULSE_GAUSSIAN,
             ],
+        ))
+
+        bool_netzero = LBoolean(
+            f'{section} - {group} - Net zero',
+            label='Net zero',
+            def_value=False,
+        )
+        f.add_quantity(bool_netzero)
+
+        f.add_quantity(LDouble(
+            f'{section} - {group} - Net zero delay',
+            label='Net zero delay',
+            def_value=0,
+            low_lim=0,
+            unit='s',
+            state_quant=bool_netzero,
+            states=True,
         ))
 
         bool_use_drag = LBoolean(
@@ -1086,10 +1097,21 @@ if __name__ == "__main__":
         ],
     ))
 
-    f.add_quantity(LBoolean(
+    bool_netzero = LBoolean(
         'Net zero, Z',
         label='Net zero',
         def_value=False,
+    )
+    f.add_quantity(bool_netzero)
+
+    f.add_quantity(LDouble(
+        'Net zero delay, Z',
+        label='Net zero delay',
+        def_value=0,
+        low_lim=0,
+        unit='s',
+        state_quant=bool_netzero,
+        states=True,
     ))
 
     bool_uni_amp = LBoolean(
@@ -1367,10 +1389,21 @@ if __name__ == "__main__":
         ],
     ))
     
-    f.add_quantity(LBoolean(
+    bool_netzero = LBoolean(
         'Net zero, 2QB',
         label='Net zero',
         def_value=False,
+    )
+    f.add_quantity(bool_netzero)
+
+    f.add_quantity(LDouble(
+        'Net zero delay, 2QB',
+        label='Net zero delay',
+        def_value=0,
+        low_lim=0,
+        unit='s',
+        state_quant=bool_netzero,
+        states=True,
     ))
 
     bool_uni = LBoolean(
