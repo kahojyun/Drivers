@@ -525,6 +525,7 @@ class SequenceToWaveforms:
         self.pulses_1qb_xy = [None for n in range(self.n_qubit)]
         self.pulses_1qb_z = [None for n in range(self.n_qubit)]
         self.pulses_2qb = [None for n in range(self.n_qubit - 1)]
+        self.pulses_2qb_on = [None for n in range(self.n_qubit - 1)]
         self.pulses_readout = [None for n in range(self.n_qubit)]
 
         # cross-talk
@@ -1112,7 +1113,10 @@ class SequenceToWaveforms:
             for gate in step.gates:
                 qubit = gate.qubit
                 if isinstance(qubit, list):
-                    qubit = qubit[0]
+                    if self.pulses_2qb_on[qubit[0]] == 'First':
+                        qubit = qubit[0]
+                    else:
+                        qubit = qubit[1]
                 gate_obj = gate.gate
 
 
@@ -1405,6 +1409,7 @@ class SequenceToWaveforms:
                 self.pulses_2qb[n] = pulses.NetZero(pulse)
             else:
                 self.pulses_2qb[n] = pulse
+            self.pulses_2qb_on[n] = config.get('On qubit, 2QB' + s)
 
         # predistortion
         self.perform_predistortion = config.get('Predistort waveforms', False)

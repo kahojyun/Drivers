@@ -1423,6 +1423,12 @@ if __name__ == "__main__":
     for i in range(MAX_QUBITS-1):
         f.add_group(f'Qubit #{i+1}-#{i+2}')
 
+        f.add_quantity(LCombo(
+            f'On qubit, 2QB #{i+1}{i+2}',
+            label='On qubit',
+            combo=['First', 'Second'],
+        ))
+        
         f.add_quantity(LDouble(
             f'Amplitude, 2QB #{i+1}{i+2}',
             label='Amplitude',

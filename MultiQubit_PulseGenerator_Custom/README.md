@@ -31,6 +31,7 @@ Run make html or make latexpdf to create the documentation for the driver.
 
 ### v 1.6.5
 - Add `Net zero` option to all pulse shape
+- Support choosing qubit on which 2QB pulse apply.
 
 ### v 1.6.4
 - Increase maximum number of pre/post/cycled pulses.
