@@ -29,6 +29,10 @@ Run make html or make latexpdf to create the documentation for the driver.
 
 ## Change log
 
+### v 1.7.0
+- Support virtual Z gate when using custom sequence in 2QRB/XEB.
+- Virtual Z gate also applies to iSWAP.
+
 ### v 1.6.5
 - Add `Net zero` option to all pulse shape
 - Support choosing qubit on which 2QB pulse apply.

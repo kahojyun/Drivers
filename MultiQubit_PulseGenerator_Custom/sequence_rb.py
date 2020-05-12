@@ -639,6 +639,10 @@ class TwoQubit_RB(Sequence):
         multi_seq = config.get('Output multiple sequences', False)
         write_seq = config.get('Write sequence as txt file', False)
         generator = config.get('Native 2-QB gate', 'CZ')
+        virtualZ = config['Add virtual Z']
+        VZphase1 = config['QB1 Phi 2QB #12']
+        VZphase2 = config['QB2 Phi 2QB #12']
+        VZgates = [gates.VirtualZGate(VZphase1), gates.VirtualZGate(VZphase2)]
         
         rnd.seed(randomize)
         if interleave is True:
@@ -790,6 +794,8 @@ class TwoQubit_RB(Sequence):
                 if ((gate_seq[0] == gates.CZ) or (gate_seq[0] == gates.iSWAP)):
                     extra_dt += dt
                     extra_dt = self.add_custom_sequence(extra_dt, cycled_seq)
+                    if virtualZ:
+                        self.add_gate(qubit=qubits_to_benchmark, gate=VZgates, dt=0)
                 else:
                     self.add_gate(qubit=qubits_to_benchmark, gate=gate_seq, dt=dt+extra_dt)
                     extra_dt = 0
@@ -1088,6 +1094,10 @@ class TwoQubit_XEB(Sequence):
         randomize = config['Randomize']
         multi_seq = config.get('Output multiple sequences', False)
         write_seq = config.get('Write sequence as txt file', False)
+        virtualZ = config['Add virtual Z']
+        VZphase1 = config['QB1 Phi 2QB #12']
+        VZphase2 = config['QB2 Phi 2QB #12']
+        VZgates = [gates.VirtualZGate(VZphase1), gates.VirtualZGate(VZphase2)]
         
         rnd.seed(randomize)
 
@@ -1155,6 +1165,8 @@ class TwoQubit_XEB(Sequence):
             if gate_seq[0] == 'Generic':
                 extra_dt += dt
                 extra_dt = self.add_custom_sequence(extra_dt, cycled_seq)
+                if virtualZ:
+                    self.add_gate(qubit=qubits_to_benchmark, gate=VZgates, dt=0)
             else:
                 self.add_gate(qubit=qubits_to_benchmark, gate=gate_seq, dt=dt+extra_dt)
                 extra_dt = 0

@@ -1405,6 +1405,8 @@ class SequenceToWaveforms:
 
             gates.CZ.new_angles(
                 config.get('QB1 Phi 2QB #12'), config.get('QB2 Phi 2QB #12'))
+            gates.iSWAP.new_angles(
+                config.get('QB1 Phi 2QB #12'), config.get('QB2 Phi 2QB #12'))
 
             if config.get('Net zero, 2QB'):
                 pulse = pulses.NetZero(pulse)
