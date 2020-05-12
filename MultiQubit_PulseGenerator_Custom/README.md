@@ -27,7 +27,10 @@ Classes and code for generating waveforms for reading out superconducting qubits
 Run make html or make latexpdf to create the documentation for the driver.
 
 
-## Change log
+## Change 
+
+### v 1.7.1
+- Fix typo in configuration `Readout relative amplitude`
 
 ### v 1.7.0
 - Support virtual Z gate when using custom sequence in 2QRB/XEB.

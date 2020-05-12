@@ -8,7 +8,7 @@ MAX_CT_MANUAL = 3
 Z_PREDISTORTION_TERMS_COMP = 1
 Z_PREDISTORTION_TERMS = 4
 MAX_READOUT_SECTION = 3
-__version__ = '1.7.0'
+__version__ = '1.7.1'
 
 # pulse timing options
 TIMING_NONE = 'Default'
@@ -2076,7 +2076,7 @@ if __name__ == "__main__":
 
         for j in range(MAX_READOUT_SECTION):
             f.add_quantity(LDouble(
-                f'Readout relative amplitude {j+1} # {qubit}',
+                f'Readout relative amplitude {j+1} #{qubit}',
                 label=f'Relative amplitude {j+1}',
                 def_value=1,
                 state_quant=bool_uni_amp,
