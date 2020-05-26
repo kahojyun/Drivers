@@ -441,10 +441,11 @@ if __name__ == "__main__":
     f.add_quantity(LCombo(
         'Interleaved 2-QB Gate',
         combo=[
-            'CZ',
-            'CZEcho',
-            'iSWAP',
+            'Ref',
             'I',
+            'CZ',
+            'iSWAP',
+            'CZEcho',
         ],
         state_quant=bool_interleave_2qb_gate,
         states=True,

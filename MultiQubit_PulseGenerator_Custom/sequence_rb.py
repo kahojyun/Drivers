@@ -702,6 +702,8 @@ class TwoQubit_RB(Sequence):
                         cliffordSeq2.append(I_2QB)
                         # cliffordSeq1.append(gates.I)
                         # cliffordSeq2.append(gates.I)
+                    elif interleaved_gate == 'Ref':
+                        pass
 
 
             # remove redundant Identity gates for cliffordSeq1
