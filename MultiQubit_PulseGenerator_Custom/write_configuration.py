@@ -8,7 +8,7 @@ MAX_CT_MANUAL = 3
 Z_PREDISTORTION_TERMS_COMP = 1
 Z_PREDISTORTION_TERMS = 4
 MAX_READOUT_SECTION = 3
-__version__ = '1.7.1'
+__version__ = '1.7.2'
 
 # pulse timing options
 TIMING_NONE = 'Default'
