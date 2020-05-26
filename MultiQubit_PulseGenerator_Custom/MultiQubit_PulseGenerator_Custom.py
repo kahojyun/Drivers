@@ -4,8 +4,8 @@ import os
 import sys
 import copy
 import re
-copy_re = re.compile('Generic - (.*) - Copy')
-paste_re = re.compile('Generic - (.*) - Paste')
+copy_re = re.compile('(.*)Copy(.*)')
+paste_re = re.compile('(.*)Paste(.*)')
 
 import numpy as np
 
@@ -106,11 +106,11 @@ class Driver(LabberDriver):
         else:
             re_result = copy_re.fullmatch(quant.name)
             if re_result:
-                self.copy_as_template(re_result.group(1))
+                self.copy_as_template(re_result.group(1), re_result.group(2))
             else:
                 re_result = paste_re.fullmatch(quant.name)
                 if re_result:
-                    self.paste_template(re_result.group(1))
+                    self.paste_template(re_result.group(1), re_result.group(2))
         return value
 
     def performGetValue(self, quant, options={}):
@@ -271,15 +271,22 @@ class Driver(LabberDriver):
         value = quant.getTraceDict(value, dt=dt)
         return value
 
-    def copy_as_template(self, group):
+    def copy_as_template(self, pre_label, post_label):
         self.template = {}
+        config = self.instrCfg.getValuesDict()
         for k in CUSTOM_PULSE_KEYS:
-            self.template[k] = self.getValue(f'Generic - {group} - {k}')
+            key = pre_label + k + post_label
+            if key in config.keys():
+                self.template[k] = config.get(pre_label + k + post_label)
 
-    def paste_template(self, group):
+    def paste_template(self, pre_label, post_label):
         if self.template is not None:
-            for k in CUSTOM_PULSE_KEYS:
-                self.sendValueToOther(f'Generic - {group} - {k}', self.template[k])
+            config = self.instrCfg.getValuesDict()
+            for k in self.template.keys():
+                key = pre_label + k + post_label
+                log.info(config.keys)
+                if key in config.keys():
+                    self.sendValueToOther(key, self.template[k])
 
 
 if __name__ == '__main__':

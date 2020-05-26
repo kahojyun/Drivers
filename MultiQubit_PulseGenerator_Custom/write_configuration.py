@@ -1010,6 +1010,17 @@ if __name__ == "__main__":
     for i in range(MAX_QUBITS):
         qubit = i+1
         f.add_group(f'Qubit #{qubit}')
+
+        f.add_quantity(LButton(
+            f'Copy #{qubit}',
+            label='Copy as template',
+        ))
+
+        f.add_quantity(LButton(
+            f'Paste #{qubit}',
+            label='Use template',
+        ))
+
         f.add_quantity(LDouble(
             f'Amplitude #{qubit}',
             label='Amplitude',
