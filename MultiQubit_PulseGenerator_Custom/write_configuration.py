@@ -2,13 +2,14 @@ MAX_QUBITS = 9
 MAX_GENERIC_PULSE = 10
 MAX_GENERIC_PRE = 5
 MAX_GENERIC_POST = 5
+MAX_TEST_PULSE = 1
 MAX_FOURIER_TERMS = 4
 MAX_CT_QUBITS = MAX_QUBITS
 MAX_CT_MANUAL = 3
 Z_PREDISTORTION_TERMS_COMP = 1
 Z_PREDISTORTION_TERMS = 4
 MAX_READOUT_SECTION = 3
-__version__ = '1.7.2'
+__version__ = '1.8.0'
 
 # pulse timing options
 TIMING_NONE = 'Default'
@@ -664,27 +665,35 @@ if __name__ == "__main__":
         unit='s',
     ))
 
-    def write_custom_pulse(section, group):
+    def write_custom_pulse(section, group, test_pulse=False):
         f.add_group(group)
+        prefix = f'{section} - {group} - '
+
+        if test_pulse:
+            f.add_quantity(LBoolean(
+                f'{prefix}Enable',
+                label='Enable',
+                def_value=False,
+            ))
 
         f.add_quantity(LButton(
-            f'{section} - {group} - Copy',
+            f'{prefix}Copy',
             label='Copy as template',
         ))
 
         f.add_quantity(LButton(
-            f'{section} - {group} - Paste',
+            f'{prefix}Paste',
             label='Use template',
         ))
 
         f.add_quantity(LCombo(
-            f'{section} - {group} - Add to qubit',
+            f'{prefix}Add to qubit',
             label='Add to qubit',
             combo=qubit_list,
         ))
 
         combo_line = LCombo(
-            f'{section} - {group} - Add to line',
+            f'{prefix}Add to line',
             label='Add to line',
             combo=[
                 'XY',
@@ -693,68 +702,86 @@ if __name__ == "__main__":
         )
         f.add_quantity(combo_line)
         
-        combo_step_timing = LCombo(
-            f'{section} - {group} - Pulse timing',
-            label='Pulse timing',
-            combo=[
-                TIMING_NONE,
-                TIMING_ABS,
-                TIMING_REL,
-            ],
-        )
-        f.add_quantity(combo_step_timing)
+        if not test_pulse:
+            combo_step_timing = LCombo(
+                f'{prefix}Pulse timing',
+                label='Pulse timing',
+                combo=[
+                    TIMING_NONE,
+                    TIMING_ABS,
+                    TIMING_REL,
+                ],
+            )
+            f.add_quantity(combo_step_timing)
 
-        f.add_quantity(LCombo(
-            f'{section} - {group} - Pulse timing reference',
-            label="Relative to previous pulse's",
-            combo=[
-                'Start',
-                'Center',
-                'End',
-            ],
-            state_quant=combo_step_timing,
-            states=[
-                TIMING_REL,
-            ],
-        ))
+            f.add_quantity(LCombo(
+                f'{prefix}Pulse timing reference',
+                label="Relative to previous pulse's",
+                combo=[
+                    'Start',
+                    'Center',
+                    'End',
+                ],
+                state_quant=combo_step_timing,
+                states=[
+                    TIMING_REL,
+                ],
+            ))
 
-        f.add_quantity(LCombo(
-            f'{section} - {group} - Pulse timing locate',
-            label="Set this pulse's",
-            combo=[
-                'Start',
-                'Center',
-                'End',
-            ],
-            state_quant=combo_step_timing,
-            states=[
-                TIMING_ABS,
-                TIMING_REL,
-            ],
-        ))
+            f.add_quantity(LCombo(
+                f'{prefix}Pulse timing locate',
+                label="Set this pulse's",
+                combo=[
+                    'Start',
+                    'Center',
+                    'End',
+                ],
+                state_quant=combo_step_timing,
+                states=[
+                    TIMING_ABS,
+                    TIMING_REL,
+                ],
+            ))
 
-        f.add_quantity(LDouble(
-            f'{section} - {group} - Pulse timing time',
-            label='Time',
-            tooltip='Absolute or relative time',
-            def_value=100e-9,
-            unit='s',
-            state_quant=combo_step_timing,
-            states=[
-                TIMING_ABS,
-                TIMING_REL,
-            ],
-        ))
+            f.add_quantity(LDouble(
+                f'{prefix}Pulse timing time',
+                label='Time',
+                tooltip='Absolute or relative time',
+                def_value=100e-9,
+                unit='s',
+                state_quant=combo_step_timing,
+                states=[
+                    TIMING_ABS,
+                    TIMING_REL,
+                ],
+            ))
+        else:
+            f.add_quantity(LCombo(
+                f'{prefix}Pulse timing locate',
+                label="Set this pulse's",
+                combo=[
+                    'Start',
+                    'Center',
+                    'End',
+                ],
+            ))
+            f.add_quantity(LDouble(
+                f'{prefix}Pulse timing time',
+                label='Absolute time',
+                tooltip='Absolute time',
+                def_value=100e-9,
+                unit='s',
+            ))
 
         combo_pulse_type = LCombo(
-            f'{section} - {group} - Pulse type',
+            f'{prefix}Pulse type',
             label='Pulse type',
             combo=PULSES_1QB,
         )
         f.add_quantity(combo_pulse_type)
 
         f.add_quantity(LDouble(
-            f'{section} - {group} - Truncation range',
+            f'{prefix}Truncation range',
             label='Truncation range',
             tooltip='Truncate at ? σ',
             def_value=3,
@@ -765,7 +792,7 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LBoolean(
-            f'{section} - {group} - Half cosine',
+            f'{prefix}Half cosine',
             label='Half cosine',
             def_value=False,
             state_quant=combo_pulse_type,
@@ -775,7 +802,7 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LBoolean(
-            f'{section} - {group} - Start at zero',
+            f'{prefix}Start at zero',
             label='Start at zero',
             def_value=False,
             state_quant=combo_pulse_type,
@@ -785,14 +812,14 @@ if __name__ == "__main__":
         ))
 
         bool_netzero = LBoolean(
-            f'{section} - {group} - Net zero',
+            f'{prefix}Net zero',
             label='Net zero',
             def_value=False,
         )
         f.add_quantity(bool_netzero)
 
         f.add_quantity(LDouble(
-            f'{section} - {group} - Net zero delay',
+            f'{prefix}Net zero delay',
             label='Net zero delay',
             def_value=0,
             low_lim=0,
@@ -802,7 +829,7 @@ if __name__ == "__main__":
         ))
 
         bool_use_drag = LBoolean(
-            f'{section} - {group} - Use DRAG',
+            f'{prefix}Use DRAG',
             label='Use DRAG',
             def_value=False,
             state_quant=combo_line,
@@ -813,21 +840,21 @@ if __name__ == "__main__":
         f.add_quantity(bool_use_drag)
 
         f.add_quantity(LDouble(
-            f'{section} - {group} - Amplitude',
+            f'{prefix}Amplitude',
             label='Amplitude',
             def_value=1,
             unit='V',
         ))
 
         f.add_quantity(LDouble(
-            f'{section} - {group} - Phase',
+            f'{prefix}Phase',
             label='Phase',
             def_value=0,
             unit='deg',
         ))
 
         f.add_quantity(LDouble(
-            f'{section} - {group} - Width',
+            f'{prefix}Width',
             label='Width',
             def_value=10e-9,
             low_lim=0,
@@ -835,7 +862,7 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LDouble(
-            f'{section} - {group} - Plateau',
+            f'{prefix}Plateau',
             label='Plateau',
             def_value=0,
             low_lim=0,
@@ -843,13 +870,13 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LDouble(
-            f'{section} - {group} - Frequency',
+            f'{prefix}Frequency',
             label='Frequency',
             unit='Hz',
         ))
 
         f.add_quantity(LDouble(
-            f'{section} - {group} - DRAG scaling',
+            f'{prefix}DRAG scaling',
             label='DRAG scaling',
             def_value=0.25e-9,
             unit='s',
@@ -858,7 +885,7 @@ if __name__ == "__main__":
         ))
 
         f.add_quantity(LDouble(
-            f'{section} - {group} - DRAG frequency detuning',
+            f'{prefix}DRAG frequency detuning',
             label='DRAG frequency detuning',
             def_value=0,
             unit='Hz',
@@ -882,6 +909,12 @@ if __name__ == "__main__":
         write_custom_pulse('Generic', f'Post pulse #{i+1}')
     #endregion Group: Post pulse
     #endregion Section: Generic sequence
+
+    #region Section: Test pulse
+    f.add_section('Test pulse')
+    for i in range(MAX_TEST_PULSE):
+        write_custom_pulse('Test pulse', f'#{i+1}', test_pulse=True)
+    #endregion Section: Test pulse
 
     #region Section: Waveform
     f.add_section('Waveform')

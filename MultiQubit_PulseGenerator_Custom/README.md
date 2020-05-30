@@ -29,6 +29,11 @@ Run make html or make latexpdf to create the documentation for the driver.
 
 ## Change 
 
+### v 1.8.0
+- Add `Test pulse` section
+- 2QRB: interleaved `Ref`
+- Copy & paste for single qubit XY and test pulse
+
 ### v 1.7.1
 - Fix typo in configuration `Readout relative amplitude`
 

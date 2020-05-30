@@ -527,6 +527,7 @@ class SequenceToWaveforms:
         self.pulses_2qb = [None for n in range(self.n_qubit - 1)]
         self.pulses_2qb_on = [None for n in range(self.n_qubit - 1)]
         self.pulses_readout = [None for n in range(self.n_qubit)]
+        self.pulses_test = [None for n in range(CONST.MAX_TEST_PULSE)]
 
         # cross-talk
         self.compensate_crosstalk = False
@@ -650,6 +651,9 @@ class SequenceToWaveforms:
         # Apply offsets
         self.readout_iq += self.readout_i_offset + 1j * self.readout_q_offset
 
+        # test pulse
+        self._add_test_pulse()
+
         # create and return dictionary with waveforms
         waveforms = dict()
         waveforms['xy'] = self._wave_xy
@@ -661,6 +665,73 @@ class SequenceToWaveforms:
         # log.info('returning z waveforms in get_waveforms. Max is {}'.format(np.max(waveforms['z'])))
         return waveforms
 
+    def _get_test_pulse(self, config, n=1):
+        section = 'Test pulse'
+        group = f'#{n}'
+        if not config[f'{section} - {group} - Enable']:
+            return (None, None, None, None, False)
+        qubit = int(config[f'{section} - {group} - Add to qubit'])-1
+        line = config[f'{section} - {group} - Add to line']
+
+        # Construct pulse
+        pulse_type = config[f'{section} - {group} - Pulse type']
+        if line == 'XY':
+            pulse = getattr(pulses, pulse_type)(complex=True)
+            pulse.use_drag = config[f'{section} - {group} - Use DRAG']
+            if pulse.use_drag:
+                pulse.drag_coefficient = config[f'{section} - {group} - DRAG scaling']
+                pulse.drag_detuning = config[f'{section} - {group} - DRAG frequency detuning']
+        else: # line == 'Z'
+            pulse = getattr(pulses, pulse_type)(complex=False)
+        pulse.amplitude = config[f'{section} - {group} - Amplitude']
+        pulse.width = config[f'{section} - {group} - Width']
+        pulse.plateau = config[f'{section} - {group} - Plateau']
+        pulse.frequency = config[f'{section} - {group} - Frequency']
+        pulse.phase = config[f'{section} - {group} - Phase'] * np.pi / 180
+        pulse.start_at_zero = config.get(f'{section} - {group} - Start at zero')
+        if pulse_type == CONST.PULSE_GAUSSIAN:
+            pulse.truncation_range = config[f'{section} - {group} - Truncation range']
+        elif pulse_type == CONST.PULSE_COSINE:
+            pulse.half_cosine = config[f'{section} - {group} - Half cosine']
+        if config.get(f'{section} - {group} - Net zero'):
+            pulse = pulses.NetZero(pulse)
+            pulse.net_zero_delay = config.get(f'{section} - {group} - Net zero delay')
+
+        duration = pulse.total_duration()
+        this_ref = config[f'{section} - {group} - Pulse timing locate']
+        t0 = config[f'{section} - {group} - Pulse timing time']
+        if this_ref == 'Start':
+            t0 += duration / 2
+        elif this_ref == 'End':
+            t0 -= duration / 2
+        return (qubit, line, t0, pulse, True)
+
+    def _add_test_pulse(self):
+        for tp in self.pulses_test:
+            qubit, line, t0, pulse, enable = tp
+            if not enable:
+                continue
+            duration = pulse.total_duration()
+            if line == 'XY':
+                waveform = self._wave_xy[qubit]
+                delay = self.wave_xy_delays[qubit]
+            else:
+                waveform = self._wave_z[qubit]
+                delay = self.wave_z_delays[qubit]
+            start = self._round(t0 - duration/2 + delay)
+            end = self._round(t0 + duration/2 + delay)
+            # calculate the pulse waveform for the selected indices
+            indices = np.arange(
+                max(np.floor(start * self.sample_rate), 0),
+                min(np.ceil(end * self.sample_rate), len(waveform)),
+                dtype=int)
+
+            # return directly if no indices
+            if len(indices) != 0:
+                # calculate time values for the pulse indices
+                t = indices / self.sample_rate
+                waveform[indices] += pulse.calculate_waveform(t0, t)
+    
     def _seperate_gates(self):
         new_sequences = []
         for step in self.sequence_list:
@@ -1503,6 +1574,10 @@ class SequenceToWaveforms:
                 m = n + 1
                 self.wave_xy_delays[n] = config.get('Qubit %d XY Delay' % m)
                 self.wave_z_delays[n] = config.get('Qubit %d Z Delay' % m)
+    
+        # test pulse
+        for i in range(CONST.MAX_TEST_PULSE):
+            self.pulses_test[i] = self._get_test_pulse(config, i+1)
 
 
 if __name__ == '__main__':
