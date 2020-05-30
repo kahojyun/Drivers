@@ -784,6 +784,15 @@ class TwoQubit_RB(Sequence):
             # self.add_gates(multi_gate_seq)
             self.prev_gate_seq = multi_gate_seq
         
+        self.final_seq = self.prev_gate_seq
+        if config.get('Add last pi pulse, 2QRB'):
+            if config.get('Pi pulse type, 2QRB') == 'XI':
+                self.final_seq = self.prev_gate_seq + [[gates.Xp, gates.I]]
+            elif config.get('Pi pulse type, 2QRB') == 'IX':
+                self.final_seq = self.prev_gate_seq + [[gates.I, gates.Xp]]
+            elif config.get('Pi pulse type, 2QRB') == 'XX':
+                self.final_seq = self.prev_gate_seq + [[gates.Xp, gates.Xp]]
+        
         if config.get('Use custom pulse'):
             # prepare generic sequence
             pulse_n = round(config['Generic - Number of pulses'])
@@ -792,7 +801,7 @@ class TwoQubit_RB(Sequence):
             
             dt = config.get('Pulse spacing')
             extra_dt = 0
-            for gate_seq in self.prev_gate_seq:
+            for gate_seq in self.final_seq:
                 if ((gate_seq[0] == gates.CZ) or (gate_seq[0] == gates.iSWAP)):
                     extra_dt += dt
                     extra_dt = self.add_custom_sequence(extra_dt, cycled_seq)
@@ -802,7 +811,7 @@ class TwoQubit_RB(Sequence):
                     self.add_gate(qubit=qubits_to_benchmark, gate=gate_seq, dt=dt+extra_dt)
                     extra_dt = 0
         else:
-            for gate_seq in self.prev_gate_seq:
+            for gate_seq in self.final_seq:
                 if ((gate_seq[0] == gates.CZ) or (gate_seq[0] == gates.iSWAP)):
                     self.add_gate(qubit=qubits_to_benchmark, gate=gate_seq[0])
                 else:

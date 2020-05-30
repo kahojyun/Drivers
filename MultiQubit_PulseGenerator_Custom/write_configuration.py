@@ -452,6 +452,32 @@ if __name__ == "__main__":
         show_in_measurement_dlg=True,
     ))
 
+    bool_2qrb_pi = LBoolean(
+        'Add last pi pulse, 2QRB',
+        label='Add last pi pulse',
+        def_value=False,
+        state_quant=combo_seq,
+        states=[
+            seq_2qrb,
+        ],
+        show_in_measurement_dlg=True,
+    )
+    f.add_quantity(bool_2qrb_pi)
+
+    f.add_quantity(LCombo(
+        'Pi pulse type, 2QRB',
+        label='Pi pulse type',
+        combo=[
+            'II',
+            'IX',
+            'XI',
+            'XX',
+        ],
+        state_quant=bool_2qrb_pi,
+        states=True,
+        show_in_measurement_dlg=True,
+    ))
+
     bool_find_clifford = LBoolean(
         'Find the cheapest recovery Clifford',
         def_value=True,
