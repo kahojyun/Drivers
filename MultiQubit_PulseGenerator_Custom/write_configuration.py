@@ -9,7 +9,7 @@ MAX_CT_MANUAL = 3
 Z_PREDISTORTION_TERMS_COMP = 1
 Z_PREDISTORTION_TERMS = 4
 MAX_READOUT_SECTION = 3
-__version__ = '1.8.0'
+__version__ = '1.9.0'
 
 # pulse timing options
 TIMING_NONE = 'Default'
@@ -62,6 +62,7 @@ if __name__ == "__main__":
     seq_rtrain = 'Readout training'
     seq_custom = 'Custom'
     seq_gen = 'Generic'
+    seq_1xeb = '1-QB XEB'
     seq_2xeb = '2-QB XEB'
     combo_seq = LCombo(
         'Sequence',
@@ -75,6 +76,7 @@ if __name__ == "__main__":
             seq_rtrain,
             seq_custom,
             seq_gen,
+            seq_1xeb,
             seq_2xeb,
         ],
         show_in_measurement_dlg=True,
@@ -307,6 +309,7 @@ if __name__ == "__main__":
         states=[
             seq_1qrb,
             seq_2qrb,
+            seq_1xeb,
             seq_2xeb,
         ],
         show_in_measurement_dlg=True,
@@ -323,6 +326,7 @@ if __name__ == "__main__":
         states=[
             seq_1qrb,
             seq_2qrb,
+            seq_1xeb,
             seq_2xeb,
         ],
         show_in_measurement_dlg=True,
@@ -336,6 +340,7 @@ if __name__ == "__main__":
         states=[
             seq_1qrb,
             seq_2qrb,
+            seq_1xeb,
             seq_2xeb,
         ],
     ))
@@ -348,6 +353,7 @@ if __name__ == "__main__":
         states=[
             seq_1qrb,
             seq_2qrb,
+            seq_1xeb,
             seq_2xeb,
         ],
         show_in_measurement_dlg=True,
@@ -380,6 +386,7 @@ if __name__ == "__main__":
         states=[
             seq_1qrb,
             seq_2qrb,
+            seq_1xeb,
             seq_2xeb,
         ],
     ))

@@ -234,7 +234,7 @@ def add_singleQ_S1_Z2p(index, gate_seq):
 
 def add_singleQ_p2(gate_seq):
     """Add single-qubit pi/2 gate."""
-    gate_set = [gates.X2p, gates.Y2p, gates.X2m, gates.Y2m]
+    gate_set = [gates.X2p, gates.Y2p, gates.W2p, gates.X2m, gates.Y2m, gates.W2m]
     gate_seq.append(rnd.choice(gate_set))
 
 def add_singleQ_based_twoQ_clifford(index, gate_seq_1, gate_seq_2, **kwargs):
@@ -1059,6 +1059,76 @@ class TwoQubit_RB(Sequence):
 
 
         return (recovery_seq_1, recovery_seq_2)
+
+
+class SingleQubit_XEB(Sequence):
+    """Single qubit cross entropy benchmarking."""
+
+    prev_randomize = np.inf  # store the previous value
+    prev_N_cycles = np.inf  # store the previous value
+    prev_sequence = ''
+    prev_gate_seq = []
+
+    def generate_sequence(self, config):
+        """
+        Generate sequence by adding gates/pulses to waveforms.
+
+        Parameters
+        ----------
+        config: dict
+            configuration
+
+        Returns
+        -------
+        """
+
+        # get parameters
+
+        sequence = config['Sequence']
+        # Number of cycles to generate
+        N_cycles = round(config['Number of cycles'])
+        randomize = config['Randomize']
+        multi_seq = config.get('Output multiple sequences', False)
+        write_seq = config.get('Write sequence as txt file', False)
+        
+        rnd.seed(randomize)
+
+        # generate new randomized clifford gates only if configuration changes
+        if (self.prev_sequence != sequence or
+                self.prev_randomize != randomize or
+                self.prev_N_cycles != N_cycles or
+                multi_seq):
+
+            self.prev_randomize = randomize
+            self.prev_N_cycles = N_cycles
+            self.prev_sequence = sequence
+
+            # Generate 2QB XEB sequence
+            gateSeq = []
+            for _ in range(N_cycles):
+                add_singleQ_p2(gateSeq)
+            
+
+            # write sequence
+            if write_seq == True:
+                import os
+                from datetime import datetime
+                directory = os.path.join(path_currentdir,'1QB_XEBseq')
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                filename = datetime.now().strftime('%Y-%m-%d %H-%M-%S') + '_N_cycles=%d_seed=%d.txt'%(N_cycles,randomize)
+                filepath = os.path.join(directory,filename)
+                log.info('make file: ' + filepath)
+                with open(filepath, "w") as text_file:
+                    print('New Sequence', file=text_file)
+                    for i, g in enumerate(gateSeq):
+                        s = cliffords.Gate_to_strGate(g)
+                        print(f'Index: {i}, Gate: [{s}]', file=text_file)
+
+            self.prev_gate_seq = gateSeq
+
+        for gate in self.prev_gate_seq:
+            self.add_gate_to_all(gate)
 
 
 class TwoQubit_XEB(Sequence):

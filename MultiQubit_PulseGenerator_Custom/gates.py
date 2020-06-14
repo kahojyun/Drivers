@@ -381,6 +381,12 @@ Ym = SingleQubitXYRotation(phi=np.pi / 2, theta=-np.pi, name='Ym')
 Y2m = SingleQubitXYRotation(phi=np.pi / 2, theta=-np.pi / 2, name='Y2m')
 Y2p = SingleQubitXYRotation(phi=np.pi / 2, theta=np.pi / 2, name='Y2p')
 
+# W gates
+Wp = SingleQubitXYRotation(phi=np.pi / 4, theta=np.pi, name='Wp')
+Wm = SingleQubitXYRotation(phi=np.pi / 4, theta=-np.pi, name='Wm')
+W2m = SingleQubitXYRotation(phi=np.pi / 4, theta=-np.pi / 2, name='W2m')
+W2p = SingleQubitXYRotation(phi=np.pi / 4, theta=np.pi / 2, name='W2p')
+
 # Z gates
 Zp = SingleQubitZRotation(np.pi, name='Zp')
 Z2p = SingleQubitZRotation(np.pi / 2, name='Z2p')

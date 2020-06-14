@@ -124,6 +124,14 @@ def Gate_to_strGate(_Gate):
         str_Gate = 'Y2p'
     elif (_Gate == gates.Y2m):
         str_Gate = 'Y2m'
+    elif (_Gate == gates.Wp):
+        str_Gate = 'Wp'
+    elif (_Gate == gates.Wm):
+        str_Gate = 'Wm'
+    elif (_Gate == gates.W2p):
+        str_Gate = 'W2p'
+    elif (_Gate == gates.W2m):
+        str_Gate = 'W2m'
     elif (_Gate == gates.Zp):
         str_Gate = 'Zp'
     elif (_Gate == gates.Zm):

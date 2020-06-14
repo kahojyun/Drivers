@@ -29,6 +29,10 @@ Run make html or make latexpdf to create the documentation for the driver.
 
 ## Change 
 
+### v 1.9.0
+- Add `1-QB XEB`
+- Add `W` gates for `XEB`
+
 ### v 1.8.0
 - Add `Test pulse` section
 - 2QRB: interleaved `Ref`
