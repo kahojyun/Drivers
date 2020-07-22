@@ -5,7 +5,7 @@ from VISA_Driver import VISA_Driver
 import numpy as np
 import re
 
-__version__ = '1.1.0'
+__version__ = '1.3.0'
 
 MIN_WAVE_LENGTH = 2400
 channel_re = re.compile(r'Ch (\d)$')
@@ -19,9 +19,13 @@ class Driver(VISA_Driver):
         VISA_Driver.performOpen(self, options)
         # get model name and number of channels
         sModel = self.getModel()
-        if sModel in ('5208'):
+        if sModel == '5208':
             self.nCh = 8
-            self.nMarker = 4
+        elif sModel == '5204':
+            self.nCh = 4
+        elif sModel == '5202':
+            self.nCh = 2
+        self.nMarker = 4
         self.initSetConfig()
 
     def performClose(self, bError=False, options={}):
@@ -54,11 +58,6 @@ class Driver(VISA_Driver):
             for m in range(self.nMarker):
                 self.setValue(f'Ch {channel} - Marker {m+1}', [])
             self.createWaveformOnTek(channel, 0, bOnlyClear=True)
-        # create empty waveform for first step in sequence
-        name = 'Labber_empty'
-        self.writeAndLog(':WLIS:WAV:NEW "%s",%d,REAL;' % (name, MIN_WAVE_LENGTH))
-        sSend = ':WLIS:WAV:DATA "%s",%d,%d,' % (name, 0, MIN_WAVE_LENGTH)
-        self.write_binary(sSend.encode('ascii'), np.zeros((MIN_WAVE_LENGTH), dtype='f4'))
 
 
     def performSetValue(self, quant, value, sweepRate=0.0, options={}):
@@ -94,7 +93,7 @@ class Driver(VISA_Driver):
             if value:
                 self.awg_run(force=True)
                 # turn on channels again, to avoid issues when switch run mode
-                self.turn_on_in_use()
+                # self.turn_on_in_use()
             else:
                 # stop AWG
                 self.awg_stop(force=True)
@@ -153,9 +152,9 @@ class Driver(VISA_Driver):
             # channels are numbered 1-8
             channel = n+1
             vData = self.getValueArray(f'Ch {channel}')
-            vMark = [[]]*self.nMarker
+            vMark = []
             for m in range(self.nMarker):
-                vMark[m] = self.getValueArray(f'Ch {channel} - Marker {m+1}')
+                vMark.append(self.getValueArray(f'Ch {channel} - Marker {m+1}'))
             bWaveUpdate = self.sendWaveformToTek(channel, vData, vMark, seq)
         # check if sequence mode
         if seq is not None:
@@ -168,25 +167,15 @@ class Driver(VISA_Driver):
             if self.bSeqUpdate or n_seq != self.nOldSeq:
                 # create sequence list
                 self.writeAndLog(f':SLIS:SEQ:DEL "{filename}"')
-                self.writeAndLog(f':SLIS:SEQ:NEW "{filename}",{n_seq+1}')
-                # use empty waveform for first step to solve problems with first marker
-                # step 1
-                for n, bUpdate in enumerate(self.lInUse):
-                    if bUpdate:
-                        name = 'Labber_empty'
-                        self.writeAndLog(
-                            f':SLIS:SEQ:STEP1:TASS{n+1}'
-                            f':WAV "{filename}","{name}"')
-                # step 2 -- n_seq+1
+                self.writeAndLog(f':SLIS:SEQ:NEW "{filename}",{n_seq}')
                 for n1 in range(n_seq):
                     for n2, bUpdate in enumerate(self.lInUse):
                         if bUpdate:
                             name = f'Labber_{n2+1}_{n1+1}'
                             self.writeAndLog(
-                                f':SLIS:SEQ:STEP{n1+2}:TASS{n2+1}'
+                                f':SLIS:SEQ:STEP{n1+1}:TASS{n2+1}'
                                 f':WAV "{filename}","{name}"')
-                # set trigger input
-                for n1 in range(n_seq+1):
+                    # always wait for trigger
                     trig = self.getValue('Sequence - Trigger source')
                     if trig == 'Internal':
                         trig = 'ITR'
@@ -196,8 +185,8 @@ class Driver(VISA_Driver):
                         trig = 'BTR'
                     self.writeAndLog(
                         f':SLIS:SEQ:STEP{n1+1}:WINP "{filename}",{trig}')
-                # last step jump to step 2
-                self.writeAndLog(f':SLIS:SEQ:STEP{n_seq+1}:GOTO "{filename}",2')
+                # for last element, set jump to first
+                self.writeAndLog(f':SLIS:SEQ:STEP{n_seq}:GOTO "{filename}",FIRS')
                 # save old sequence length
                 self.nOldSeq = n_seq
             # turn on channels in use 
@@ -212,7 +201,7 @@ class Driver(VISA_Driver):
         # send command to turn on run mode to tek
         self.awg_run()
         # turn on channels again, to avoid issues when turning on/off run mode
-        self.turn_on_in_use()
+        # self.turn_on_in_use()
 
 
     def scaleWaveformToReal(self, vData, dVpp, ch):
@@ -356,7 +345,7 @@ class Driver(VISA_Driver):
             return
         self.bIsStopped = True
         self.writeAndLog(':AWGC:STOP;')
-        # wait for output to be turned on again
+        # wait for output to be turned off
         iRunState = int(self.askAndLog(':AWGC:RST?'))
         nTry = 1000
         while nTry>0 and iRunState!=0 and not self.isStopped():
@@ -376,7 +365,7 @@ class Driver(VISA_Driver):
             return
         self.bIsStopped = False
         self.writeAndLog(':AWGC:RUN;')
-        # wait for output to be turned on again
+        # wait for output to be turned on
         iRunState = int(self.askAndLog(':AWGC:RST?'))
         nTry = 1000
         while nTry>0 and iRunState==0 and not self.isStopped():
