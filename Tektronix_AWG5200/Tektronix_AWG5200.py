@@ -58,11 +58,6 @@ class Driver(VISA_Driver):
             for m in range(self.nMarker):
                 self.setValue(f'Ch {channel} - Marker {m+1}', [])
             self.createWaveformOnTek(channel, 0, bOnlyClear=True)
-        # create empty waveform for first step in sequence
-        name = 'Labber_empty'
-        self.writeAndLog(':WLIS:WAV:NEW "%s",%d,REAL;' % (name, MIN_WAVE_LENGTH))
-        sSend = ':WLIS:WAV:DATA "%s",%d,%d,' % (name, 0, MIN_WAVE_LENGTH)
-        self.write_binary(sSend.encode('ascii'), np.zeros((MIN_WAVE_LENGTH), dtype='f4'))
 
 
     def performSetValue(self, quant, value, sweepRate=0.0, options={}):
@@ -172,25 +167,15 @@ class Driver(VISA_Driver):
             if self.bSeqUpdate or n_seq != self.nOldSeq:
                 # create sequence list
                 self.writeAndLog(f':SLIS:SEQ:DEL "{filename}"')
-                self.writeAndLog(f':SLIS:SEQ:NEW "{filename}",{n_seq+1}')
-                # use empty waveform for first step to solve problems with first marker
-                # step 1
-                for n, bUpdate in enumerate(self.lInUse):
-                    if bUpdate:
-                        name = 'Labber_empty'
-                        self.writeAndLog(
-                            f':SLIS:SEQ:STEP1:TASS{n+1}'
-                            f':WAV "{filename}","{name}"')
-                # step 2 -- n_seq+1
+                self.writeAndLog(f':SLIS:SEQ:NEW "{filename}",{n_seq}')
                 for n1 in range(n_seq):
                     for n2, bUpdate in enumerate(self.lInUse):
                         if bUpdate:
                             name = f'Labber_{n2+1}_{n1+1}'
                             self.writeAndLog(
-                                f':SLIS:SEQ:STEP{n1+2}:TASS{n2+1}'
+                                f':SLIS:SEQ:STEP{n1+1}:TASS{n2+1}'
                                 f':WAV "{filename}","{name}"')
-                # set trigger input
-                for n1 in range(n_seq+1):
+                    # always wait for trigger
                     trig = self.getValue('Sequence - Trigger source')
                     if trig == 'Internal':
                         trig = 'ITR'
@@ -200,8 +185,8 @@ class Driver(VISA_Driver):
                         trig = 'BTR'
                     self.writeAndLog(
                         f':SLIS:SEQ:STEP{n1+1}:WINP "{filename}",{trig}')
-                # last step jump to step 2
-                self.writeAndLog(f':SLIS:SEQ:STEP{n_seq+1}:GOTO "{filename}",2')
+                # for last element, set jump to first
+                self.writeAndLog(f':SLIS:SEQ:STEP{n_seq}:GOTO "{filename}",FIRS')
                 # save old sequence length
                 self.nOldSeq = n_seq
             # turn on channels in use 
