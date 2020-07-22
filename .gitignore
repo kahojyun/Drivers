@@ -74,6 +74,8 @@ Keysight_PXI_AWG/signadyne.py
 
 Keysight_PXI_Digitizer/signadyne.py
 
+QuantumCTek/
+
 # OS generated files #
 ######################
 .DS_Store
