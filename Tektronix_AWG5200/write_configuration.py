@@ -1,7 +1,11 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path('../Helper_Lib').resolve()))
+
 from driver_config import (
     LDriverDefinition, LDouble, LCombo, LVector, LButton, LBoolean
 )
-from pathlib import Path
 
 if __name__ == "__main__":
     dir_path = Path(__file__).parent

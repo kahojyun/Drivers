@@ -34,7 +34,9 @@ PULSES_2QB = [
 ]
 
 if __name__ == "__main__":
+    import sys
     from pathlib import Path
+    sys.path.append(str(Path('../Helper_Lib').resolve()))
     from driver_config import *
     # General setting
     dir_path = Path(__file__).parent
