@@ -5,7 +5,7 @@ from VISA_Driver import VISA_Driver
 import numpy as np
 import re
 
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 MIN_WAVE_LENGTH = 2400
 channel_re = re.compile(r'Ch (\d)$')
@@ -93,7 +93,7 @@ class Driver(VISA_Driver):
             if value:
                 self.awg_run(force=True)
                 # turn on channels again, to avoid issues when switch run mode
-                self.turn_on_in_use()
+                # self.turn_on_in_use()
             else:
                 # stop AWG
                 self.awg_stop(force=True)
@@ -201,7 +201,7 @@ class Driver(VISA_Driver):
         # send command to turn on run mode to tek
         self.awg_run()
         # turn on channels again, to avoid issues when turning on/off run mode
-        self.turn_on_in_use()
+        # self.turn_on_in_use()
 
 
     def scaleWaveformToReal(self, vData, dVpp, ch):

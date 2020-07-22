@@ -8,7 +8,7 @@ if __name__ == "__main__":
     f = LDriverDefinition(dir_path/'Tektronix_AWG5200.ini')
     f.add_general_settings(
         name='Tektronix AWG5200',
-        version='1.2.0',
+        version='1.3.0',
         driver_path='Tektronix_AWG5200',
         interface='TCPIP',
         support_arm=False,
