@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path('../Helper_Lib').resolve()))
+sys.path.append(str(Path(__file__).parents[1]/'Helper_Lib'))
 
 from driver_config import (
     LDriverDefinition, LDouble, LBoolean, LButton, LVector
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     f = LDriverDefinition(dir_path/'QuantumCTek_AWG.ini')
     f.add_general_settings(
         name='QuantumCTek_AWG',
-        version='0.0.2',
+        version='0.0.3',
         driver_path='QuantumCTek_AWG',
         interface='TCPIP',
         support_arm=True,

@@ -18,14 +18,13 @@ class Driver(InstrumentDriver.InstrumentWorker):
 
     def performOpen(self, options={}):
         """Perform the operation of opening the instrument connection"""
-        gains = [
-            int(self.getValue(f'Channel gain #{i+1}'))
-            for i in range(CONST.MAX_CHANNELS)]
-        offsets = [
-            int(self.getValue(f'Channel default voltage #{i+1}'))
-            for i in range(CONST.MAX_CHANNELS)]
+        import json
+        with open('offset_config.json', 'r') as f:
+            offset_dict = json.load(f)
+        offsets = offset_dict[self.comCfg.address]
+        self.default_offset = [offsets[2], offsets[3], offsets[0], offsets[1]]
         ret = 0
-        ret |= dev.da_connect_device(self.comCfg.name, self.comCfg.address, gains, offsets)
+        ret |= dev.da_connect_device(self.comCfg.name, self.comCfg.address, None, offsets)
         ret |= dev.da_init_device(self.comCfg.name)
         if ret != 0:
             raise Exception(f'da board:[{self.comCfg.name}] connect or init failure, ret:[{ret}]')
@@ -53,7 +52,7 @@ class Driver(InstrumentDriver.InstrumentWorker):
 
     def _rescale(self, n, waveform):
         """Rescale and clip waveform for channel n, raise an error if clipping is not allowed."""
-        offset1 = int(self.getValue(f'Channel default voltage #{n}'))
+        offset1 = self.default_offset[n-1]
         offset2 = int(self.getValue(f'Data offset #{n}'))
         code_max = 32767 - offset1 - offset2
         code_min = -32768 - offset1 - offset2
@@ -105,14 +104,10 @@ class Driver(InstrumentDriver.InstrumentWorker):
             # else:
             #     # stop all channel
             #     self._setValue(dev.da_stop_output_wave, self.comCfg.name, 0)
-        elif quant.name.startswith('Channel default voltage'):
-            # n = int(quant.name[-1])
-            # self._setValue(dev.da_set_channel_default_voltage, self.comCfg.name, f'Z{n}', 32768-value)
-            value = quant.getValue()
         elif quant.name.startswith('Channel gain'):
-            # n = int(quant.name[-1])
-            # self._setValue(dev.da_set_channel_gain, self.comCfg.name, f'Z{n}', value)
-            value = quant.getValue()
+            value = int(round(value))
+            n = int(quant.name[-1])
+            self._setValue(dev.da_set_channel_gain, self.comCfg.name, f'Z{n}', value)
         elif quant.name.startswith('Data offset'):
             n = int(quant.name[-1])
             # self._setValue(dev.da_set_data_offset, self.comCfg.name, f'Z{n}', int(round(value*32768)))
