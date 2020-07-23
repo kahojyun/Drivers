@@ -37,12 +37,10 @@ class Driver(InstrumentDriver.InstrumentWorker):
 
     def initSetConfig(self):
         """This function is run before setting values in Set Config"""
-        self.old_waveform = [None] * CONST.MAX_CHANNELS
+        self.waveform = [None] * CONST.MAX_CHANNELS
         self.update_waveform = [False] * CONST.MAX_CHANNELS
-        # Clear old waveforms
-        for i in range(CONST.MAX_CHANNELS):
-            mode = 0
-            self._setValue(dev.da_write_wave, [0], self.comCfg.name, f'Z{i+1}', 'i', mode, 0)
+        # stop all outputs
+        self._setValue(dev.da_stop_output_wave, self.comCfg.name, 0)
 
     def _setValue(self, _func, *args):
         """Call API and check returned value"""
@@ -66,14 +64,14 @@ class Driver(InstrumentDriver.InstrumentWorker):
 
     def _upload_waveform(self):
         """Upload waveform and enable output"""
-        self._setValue(dev.da_stop_output_wave, self.comCfg.name, 0)
         for i in range(CONST.MAX_CHANNELS):
-            if self.update_waveform[i] and (self.old_waveform[i] is not None):
-                scaled_v = self._rescale(i+1, self.old_waveform[i])
+            if self.update_waveform[i] and (self.waveform[i] is not None):
+                self._setValue(dev.da_stop_output_wave, self.comCfg.name, f'Z{i+1}')
+                scaled_v = self._rescale(i+1, self.waveform[i])
                 mode = 1 if self.getValue(f'Continuous output #{i+1}') else 0
                 self._setValue(dev.da_write_wave, scaled_v, self.comCfg.name, f'Z{i+1}', 'i', mode, 0)
+                self._setValue(dev.da_start_output_wave, self.comCfg.name, f'Z{i+1}')
             self.update_waveform[i] = False
-        self._setValue(dev.da_start_output_wave, self.comCfg.name, 0)
 
     def performSetValue(self, quant, value, sweepRate=0.0, options={}):
         """Perform the Set Value instrument operation. This function should
@@ -118,18 +116,18 @@ class Driver(InstrumentDriver.InstrumentWorker):
                 raise Exception(f'{quant.name} overflows. Input range is {code_min} -- {code_max}.')
             # self._setValue(dev.da_set_data_offset, self.comCfg.name, f'Z{n}', int(round(value*32768)))
             self._setValue(dev.da_set_channel_default_voltage, self.comCfg.name, f'Z{n}', 32768-value)
-            if self.old_waveform[n-1] is not None:
+            if self.waveform[n-1] is not None:
                 self.update_waveform[n-1] = True
         elif quant.name.startswith('Waveform'):
             n = int(quant.name[-1])
-            if ((self.old_waveform[n-1] is None) or
-                (len(self.old_waveform[n-1]) != len(value['y'])) or
-                np.any(self.old_waveform[n-1] != value['y'])):
-                    self.old_waveform[n-1] = value['y']
+            if ((self.waveform[n-1] is None) or
+                (len(self.waveform[n-1]) != len(value['y'])) or
+                np.any(self.waveform[n-1] != value['y'])):
+                    self.waveform[n-1] = value['y']
                     self.update_waveform[n-1] = True
         elif quant.name.startswith('Continuous output'):
             n = int(quant.name[-1])
-            if self.old_waveform[n-1] is not None:
+            if self.waveform[n-1] is not None:
                 self.update_waveform[n-1] = True
         if self.isFinalCall(options):
             if np.any(self.update_waveform):
