@@ -54,12 +54,12 @@ class Driver(InstrumentDriver.InstrumentWorker):
         """Rescale and clip waveform for channel n, raise an error if clipping is not allowed."""
         offset1 = self.default_offset[n-1]
         offset2 = int(self.getValue(f'Data offset #{n}'))
-        code_max = 32767 - offset1 - offset2
-        code_min = -32768 - offset1 - offset2
-        scaled_v = np.array(np.round(65535/2*waveform), dtype=int)
+        code_max = 32768 - offset1 - offset2
+        code_min = -32767 - offset1 - offset2
+        scaled_v = np.array(np.round(32767*waveform), dtype=int)
         if not self.getValue(f'Allow clipping #{n}'):
             if np.any(scaled_v > code_max) or np.any(scaled_v < code_min):
-                raise Exception(f'Waveform #{n} overflows. Input range is {code_min/65535*2:f} -- {code_max/65535*2:f}.')
+                raise Exception(f'Waveform #{n} overflows. Input range is {code_min/32767:f} -- {code_max/32767:f}.')
         else:
             scaled_v = np.clip(scaled_v, code_min, code_max)
         return scaled_v
@@ -109,9 +109,15 @@ class Driver(InstrumentDriver.InstrumentWorker):
             n = int(quant.name[-1])
             self._setValue(dev.da_set_channel_gain, self.comCfg.name, f'Z{n}', value)
         elif quant.name.startswith('Data offset'):
+            value = int(round(value))
             n = int(quant.name[-1])
+            offset1 = self.default_offset[n-1]
+            code_max = 32768 - offset1
+            code_min = -32767 - offset1
+            if value > code_max or value < code_min:
+                raise Exception(f'{quant.name} overflows. Input range is {code_min} -- {code_max}.')
             # self._setValue(dev.da_set_data_offset, self.comCfg.name, f'Z{n}', int(round(value*32768)))
-            self._setValue(dev.da_set_channel_default_voltage, self.comCfg.name, f'Z{n}', 32767-value)
+            self._setValue(dev.da_set_channel_default_voltage, self.comCfg.name, f'Z{n}', 32768-value)
             if self.old_waveform[n-1] is not None:
                 self.update_waveform[n-1] = True
         elif quant.name.startswith('Waveform'):
