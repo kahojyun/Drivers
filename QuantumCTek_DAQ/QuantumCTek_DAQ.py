@@ -3,7 +3,8 @@
 import InstrumentDriver
 import numpy as np
 import sys
-sys.path.append(r'C:\Users\universe\Labber\Drivers\QuantumCTek\lib')
+from pathlib import Path
+sys.path.append(str((Path(__file__).parents[1]/'QuantumCTek'/'lib').resolve()))
 import device_interface
 import write_configuration as CONST
 

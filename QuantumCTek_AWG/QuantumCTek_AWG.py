@@ -5,7 +5,8 @@ import time
 import InstrumentDriver
 import numpy as np
 import sys
-sys.path.append(r'C:\Users\universe\Labber\Drivers\QuantumCTek\lib')
+from pathlib import Path
+sys.path.append(str((Path(__file__).parents[1]/'QuantumCTek'/'lib').resolve()))
 import device_interface
 import write_configuration as CONST
 
@@ -19,7 +20,7 @@ class Driver(InstrumentDriver.InstrumentWorker):
     def performOpen(self, options={}):
         """Perform the operation of opening the instrument connection"""
         import json
-        with open('offset_config.json', 'r') as f:
+        with open(Path(__file__).parent/'offset_config.json', 'r') as f:
             offset_dict = json.load(f)
         offsets = offset_dict[self.comCfg.address]
         self.default_offset = [offsets[2], offsets[3], offsets[0], offsets[1]]

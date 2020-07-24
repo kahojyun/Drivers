@@ -1,15 +1,14 @@
-import sys
-from pathlib import Path
-
-sys.path.append(str(Path(__file__).parents[1]/'Helper_Lib'))
-
-from driver_config import (
-    LDriverDefinition, LDouble
-)
-
 MAX_CHANNELS = 4
 
 if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+
+    sys.path.append(str(Path(__file__).parents[1]/'Helper_Lib'))
+
+    from driver_config import (
+        LDriverDefinition, LDouble
+    )
     dir_path = Path(__file__).parent
     f = LDriverDefinition(dir_path/'QuantumCTek_DC.ini')
     f.add_general_settings(
