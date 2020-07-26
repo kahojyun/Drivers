@@ -75,6 +75,7 @@ Keysight_PXI_AWG/signadyne.py
 Keysight_PXI_Digitizer/signadyne.py
 
 QuantumCTek/
+QuantumCTek_AWG/offset_config.json
 
 # OS generated files #
 ######################
