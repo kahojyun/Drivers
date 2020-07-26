@@ -25,7 +25,7 @@ class Driver(InstrumentDriver.InstrumentWorker):
         """Perform the Set Value instrument operation. This function should
         return the actual value set by the instrument"""
         n = int(quant.name[-1])
-        ret = dev.dc_set(self.comCfg.name, self.comCfg.address, PORT, n, ('VOLT', value))
+        ret = dev.dc_set(self.comCfg.name, self.comCfg.address, PORT, n, ('VOLT', float(value)))
         if ret != 0:
             raise Exception(f"Error setting value. dc board:[{self.comCfg.name}], ret:[{ret}]")
         return value
