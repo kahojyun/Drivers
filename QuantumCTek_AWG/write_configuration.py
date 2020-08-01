@@ -1,20 +1,19 @@
-import sys
-from pathlib import Path
-
-sys.path.append(str(Path('../Helper_Lib').resolve()))
-
-from driver_config import (
-    LDriverDefinition, LDouble, LBoolean, LButton, LVector
-)
-
 MAX_CHANNELS = 4
 
 if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+
+    sys.path.append(str(Path(__file__).parents[1]/'Helper_Lib'))
+
+    from driver_config import (
+        LDriverDefinition, LDouble, LBoolean, LButton, LVector
+    )
     dir_path = Path(__file__).parent
     f = LDriverDefinition(dir_path/'QuantumCTek_AWG.ini')
     f.add_general_settings(
         name='QuantumCTek_AWG',
-        version='0.0.2',
+        version='0.0.3',
         driver_path='QuantumCTek_AWG',
         interface='TCPIP',
         support_arm=True,
@@ -89,13 +88,6 @@ if __name__ == "__main__":
             tooltip='Type: int.',
             low_lim=-512,
             high_lim=511,
-        ))
-    for i in range(MAX_CHANNELS):
-        f.add_quantity(LDouble(
-            f'Channel default voltage #{i+1}',
-            label=f'Channel default voltage #{i+1}',
-            def_value=0,
-            tooltip='Type: int.',
         ))
 
     f.add_group('Output')

@@ -1,21 +1,20 @@
-import sys
-from pathlib import Path
-
-sys.path.append(str(Path('../Helper_Lib').resolve()))
-
-from driver_config import (
-    LDriverDefinition, LDouble, LBoolean,
-    LString, LVector, LCombo, LVectorComplex, LComplex
-)
-
 MAX_FREQS = 8
 
 if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+
+    sys.path.append(str(Path(__file__).parents[1]/'Helper_Lib'))
+
+    from driver_config import (
+        LDriverDefinition, LDouble, LBoolean,
+        LString, LVector, LCombo, LVectorComplex, LComplex
+    )
     dir_path = Path(__file__).parent
     f = LDriverDefinition(dir_path/'QuantumCTek_DAQ.ini')
     f.add_general_settings(
         name='QuantumCTek_DAQ',
-        version='0.0.1',
+        version='0.0.2',
         driver_path='QuantumCTek_DAQ',
         interface='Other',
         support_arm=True,
