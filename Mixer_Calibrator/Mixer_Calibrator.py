@@ -28,9 +28,12 @@ class Driver(InstrumentDriver.InstrumentWorker):
             # validate input
             freq = self.getValue('Frequency')
             n_pts = self.getValue('Number of points')
-            freq_res = freq / n_pts
+            sample_rate = self.getValue('Sample rate')
+            freq_res = sample_rate / n_pts
             freq = round(freq/freq_res)*freq_res
             self.setValue('Frequency', freq)
+            if quant.name == 'Frequency':
+                value = freq
         return value
 
 
@@ -42,10 +45,10 @@ class Driver(InstrumentDriver.InstrumentWorker):
                 # calculate waveform
                 i, q, q_delayed = self._get_waveform()
                 # apply calibration
-                ratio = 10**(self.getValue('Gain imbalance')/20)
+                ratio = 10**(self.getValue('Gain imbalance')/40)
                 skew = self.getValue('Phase skew') * np.pi/180
                 self.waveform_i = ratio*(i + q*np.tan(skew))
-                self.waveform_q = q_delayed / np.cos(skew)
+                self.waveform_q = q_delayed / np.cos(skew) / ratio
                 if self.getValue('Calibrate offset'):
                     self.waveform_i += self.getValue('I offset')
                     self.waveform_q += self.getValue('Q offset')
