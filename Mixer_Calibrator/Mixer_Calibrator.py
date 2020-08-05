@@ -77,7 +77,7 @@ class Driver(InstrumentDriver.InstrumentWorker):
             amp = self.getValue('Amplitude')
             n_pts = int(round(self.getValue('Number of points')))
             t = np.arange(n_pts) / sample_rate
-            if self.getValue('Swap IQ'):
+            if not self.getValue('Swap IQ'):
                 i = amp*np.cos(2*np.pi*freq*t)
                 q = amp*np.sin(2*np.pi*freq*t)
                 q_delayed = amp*np.sin(2*np.pi*freq*(t-delay))
