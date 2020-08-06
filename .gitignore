@@ -56,25 +56,9 @@ coverage.xml
 # PyBuilder
 target/
 
-AlazarTech_Digitizer/atsapi/__init__.py
-
-AlazarTech_Digitizer/atsapi/atsapi.py
-
-AlazarTech_Digitizer/atsapi/ATSApi32.dll
-
 AlazarTech_Digitizer_with_SDK/atsapi
 
-Signadyne_Digitizer/SD_DLL_009600.dll
-
-Signadyne_Digitizer/signadyne.py
-
-Signadyne_AWG/signadyne.py
-
-Keysight_PXI_AWG/signadyne.py
-
-Keysight_PXI_Digitizer/signadyne.py
-
-QuantumCTek/
+/QuantumCTek
 QuantumCTek_AWG/offset_config.json
 
 # OS generated files #
@@ -87,5 +71,4 @@ QuantumCTek_AWG/offset_config.json
 ehthumbs.db
 Thumbs.db
 *.bak
-Zurich_Instruments_HDAWG/zhinst/
 .vscode
