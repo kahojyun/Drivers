@@ -13,7 +13,7 @@ if __name__ == "__main__":
     f = LDriverDefinition(dir_path/'QuantumCTek_AWG.ini')
     f.add_general_settings(
         name='QuantumCTek_AWG',
-        version='0.0.3',
+        version='0.0.4',
         driver_path='QuantumCTek_AWG',
         interface='TCPIP',
         support_arm=True,
@@ -92,6 +92,11 @@ if __name__ == "__main__":
 
     f.add_group('Output')
     for i in range(MAX_CHANNELS):
+        f.add_quantity(LBoolean(
+            f'Output #{i+1}',
+            label=f'Output #{i+1}',
+            def_value=True,
+        ))
         f.add_quantity(LBoolean(
             f'Continuous output #{i+1}',
             label=f'Continuous output #{i+1}',

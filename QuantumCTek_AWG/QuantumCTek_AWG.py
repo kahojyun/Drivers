@@ -40,6 +40,7 @@ class Driver(InstrumentDriver.InstrumentWorker):
         """This function is run before setting values in Set Config"""
         self.waveform = [None] * CONST.MAX_CHANNELS
         self.update_waveform = [False] * CONST.MAX_CHANNELS
+        self.output = [False] * CONST.MAX_CHANNELS
         # stop all outputs
         self._setValue(dev.da_stop_output_wave, self.comCfg.name, 0)
 
@@ -66,13 +67,13 @@ class Driver(InstrumentDriver.InstrumentWorker):
     def _upload_waveform(self):
         """Upload waveform and enable output"""
         for i in range(CONST.MAX_CHANNELS):
-            if self.update_waveform[i] and (self.waveform[i] is not None):
+            if self.update_waveform[i] and self.output[i] and (self.waveform[i] is not None):
                 self._setValue(dev.da_stop_output_wave, self.comCfg.name, f'Z{i+1}')
                 scaled_v = self._rescale(i+1, self.waveform[i])
                 mode = 1 if self.getValue(f'Continuous output #{i+1}') else 0
                 self._setValue(dev.da_write_wave, scaled_v, self.comCfg.name, f'Z{i+1}', 'i', mode, 0)
                 self._setValue(dev.da_start_output_wave, self.comCfg.name, f'Z{i+1}')
-            self.update_waveform[i] = False
+                self.update_waveform[i] = False
 
     def performSetValue(self, quant, value, sweepRate=0.0, options={}):
         """Perform the Set Value instrument operation. This function should
@@ -107,6 +108,14 @@ class Driver(InstrumentDriver.InstrumentWorker):
             value = int(round(value))
             n = int(quant.name[-1])
             self._setValue(dev.da_set_channel_gain, self.comCfg.name, f'Z{n}', value)
+        elif quant.name.startswith('Output'):
+            n = int(quant.name[-1])
+            self.output[n-1] = value
+            if value:
+                # Need to upload and start output
+                self.update_waveform[n-1] = True
+            else:
+                self._setValue(dev.da_stop_output_wave, self.comCfg.name, f'Z{n}')
         elif quant.name.startswith('Data offset'):
             value = int(round(value))
             n = int(quant.name[-1])
